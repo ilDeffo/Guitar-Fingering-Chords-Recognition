@@ -9,12 +9,29 @@ import numpy as np
 import torch
 
 
+def process(filename):
+    """
+        * FUNCTION TO CALL FOR IMAGE PROCESSING OF A SINGLE FILE *
+        The experiments showed that the actual better image processing is:
+        Saturated interpolation betweeen the original image and the Frei & Chen edges.
+    """
+    img = cv.imread(filename)
+    # Convert image to Torch tensor (h, w, c)
+    img = torch.from_numpy(img)
+    # Calling processing methods
+    edges = frei_and_chen_edges(img)
+    out = saturation(interpolation(edges, img, a=0.3))
+    # Returning final image
+    return out
+
+
 # ATTENTION! Each of the following methods accepts img as BGR PyTorch image tensor
 #            of shape (h, w, c).
 
+
 def interpolation(img1, img2, a):
     if a < 0 or a > 1:
-        print("ATTENTION! a variable must be in [0, 1] interval. Skipping interpolation ...")
+        print("ATTENTION! The parameter 'a' must be in [0, 1] interval. Skipping interpolation ...")
         return img
     img1 = img1.type(torch.float32)
     img2 = img2.type(torch.float32)
@@ -62,11 +79,6 @@ def contrast_stretching(img):
 
 def sharpening(img):
     img = img.numpy().astype(np.float32)
-    '''
-    kernel = np.array([[0, -3, 0],
-                       [-3,  15, -3],
-                       [0, -3, 0]])
-    '''
     kernel = np.array([[-1, -1, -1],
                        [-1, 9, -1],
                        [-1, -1, -1]])
@@ -83,7 +95,7 @@ def get_gradient(im, kernel_x, kernel_y):
     Gx = cv.filter2D(im, -1, kernel_x)
     Gy = cv.filter2D(im, -1, kernel_y)
     # Getting magnitude and direction
-    M = np.sqrt(Gx**2 + Gy**2)
+    M = np.sqrt(Gx ** 2 + Gy ** 2)
     D = np.arctan2(Gy, Gx)
     return M, D
 
@@ -119,13 +131,15 @@ def frei_and_chen_edges(img):
     out = torch.from_numpy(out).type(torch.uint8)
     return out
 
+
 if __name__ == '__main__':
-    # Import an image from dataset
-    img = cv.imread('Dataset/A/A (33).jpeg')
-    f, ax = plt.subplots(5, 2, figsize=(12, 18))
+    # Import an image file from dataset
+    file = 'Dataset/F/F (30).jpeg'
+    img = cv.imread(file)
+    f, ax = plt.subplots(6, 2, figsize=(12, 20))
+    f.tight_layout()
     ax[0][0].imshow(cv.cvtColor(img, cv.COLOR_BGR2RGB))
     ax[0][0].set_title('0. Original image')
-    # plt.show()
 
     # Convert to Torch tensor (c, h, w)
     # img = np.swapaxes(np.swapaxes(img, 0, 2), 1, 2)
@@ -167,14 +181,33 @@ if __name__ == '__main__':
     ax[3][1].imshow(cv.cvtColor(out_7.numpy(), cv.COLOR_BGR2RGB))
     ax[3][1].set_title('7. Negative Canny edges')
 
-    # 7 - IMAGE INTERPOLATION
+    # 8 - SATURATED IMAGE INTERPOLATION with out 6
     out_8 = saturation(interpolation(negative(out_6), img, a=0.1))
     ax[4][0].imshow(cv.cvtColor(out_8.numpy(), cv.COLOR_BGR2RGB))
     ax[4][0].set_title('8. Saturated Interpolation: 7 + Original')
 
-    # 8 - ANOTHER IMAGE INTERPOLATION
+    # 9 - SATURATED IMAGE INTERPOLATION with out 5
     out_9 = saturation(interpolation(out_5, img, a=0.3))
     ax[4][1].imshow(cv.cvtColor(out_9.numpy(), cv.COLOR_BGR2RGB))
     ax[4][1].set_title('9. Saturated interpolation: 5 + Original')
 
+    # 10 - SATURATED IMAGE INTERPOLATION with Frei & Chen edges
+    fc_edges = frei_and_chen_edges(img)
+    out_10 = saturation(interpolation(fc_edges, img, a=0.3))
+    ax[5][0].imshow(cv.cvtColor(out_10.numpy(), cv.COLOR_BGR2RGB))
+    ax[5][0].set_title('10. Saturated interpolation: Frei & Chen edges + Original')
+
+    # 11 - SATURATED IMAGE INTERPOLATION with Canny edges
+    c_edges = torch.from_numpy(cv.Canny(img.numpy(), threshold1=100, threshold2=200))
+    out_11 = saturation(interpolation(c_edges, img, a=0.3))
+    ax[5][1].imshow(cv.cvtColor(out_11.numpy(), cv.COLOR_BGR2RGB))
+    ax[5][1].set_title('11. Saturated interpolation: Canny edges + Original')
+
     plt.show()
+
+    # FINAL IMAGE PROCESSING TEST
+    cv.imshow("Input image", img.numpy())
+    processed_img = process(file)
+    cv.imshow("Processed image", processed_img.numpy())
+    cv.waitKey(0)
+    cv.destroyAllWindows()

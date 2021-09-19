@@ -1,4 +1,4 @@
-torch
+torch~=1.8.0
 matplotlib
 opencv-python
-numpy
+numpy~=1.20.2
