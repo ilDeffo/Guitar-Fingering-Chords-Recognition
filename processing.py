@@ -13,14 +13,14 @@ def process(filename):
     """
         * FUNCTION TO CALL FOR IMAGE PROCESSING OF A SINGLE FILE *
         The experiments showed that the actual better image processing is:
-        Saturated interpolation betweeen the original image and the Frei & Chen edges.
+        Saturated blending betweeen the original image and the Frei & Chen edges.
     """
     img = cv.imread(filename)
     # Convert image to Torch tensor (h, w, c)
     img = torch.from_numpy(img)
     # Calling processing methods
     edges = frei_and_chen_edges(img)
-    out = saturation(interpolation(edges, img, a=0.3))
+    out = saturation(blending(img, edges, a=0.5))
     # Returning final image
     return out
 
@@ -29,9 +29,9 @@ def process(filename):
 #            of shape (h, w, c).
 
 
-def interpolation(img1, img2, a):
+def blending(img1, img2, a):
     if a < 0 or a > 1:
-        print("ATTENTION! The parameter 'a' must be in [0, 1] interval. Skipping interpolation ...")
+        print("ATTENTION! The parameter 'a' must be in [0, 1] interval. Skipping blending ...")
         return img
     img1 = img1.type(torch.float32)
     img2 = img2.type(torch.float32)
@@ -50,7 +50,7 @@ def negative(img):
 
 def saturation(img):
     img = img.type(torch.float32)
-    out = img * 1.8 - 30
+    out = img * 1.8 - 10
     out = torch.round(out).clip(0, 255)
     return out.type(torch.uint8)
 
@@ -134,7 +134,7 @@ def frei_and_chen_edges(img):
 
 if __name__ == '__main__':
     # Import an image file from dataset
-    file = 'Dataset/F/F (30).jpeg'
+    file = 'Dataset/A/A (18).jpeg'
     img = cv.imread(file)
     f, ax = plt.subplots(6, 2, figsize=(12, 20))
     f.tight_layout()
@@ -181,27 +181,27 @@ if __name__ == '__main__':
     ax[3][1].imshow(cv.cvtColor(out_7.numpy(), cv.COLOR_BGR2RGB))
     ax[3][1].set_title('7. Negative Canny edges')
 
-    # 8 - SATURATED IMAGE INTERPOLATION with out 6
-    out_8 = saturation(interpolation(negative(out_6), img, a=0.1))
+    # 8 - SATURATED IMAGE BLENDING with out 6
+    out_8 = saturation(blending(img, negative(out_6), a=0.9))
     ax[4][0].imshow(cv.cvtColor(out_8.numpy(), cv.COLOR_BGR2RGB))
-    ax[4][0].set_title('8. Saturated Interpolation: 7 + Original')
+    ax[4][0].set_title('8. Saturated blending: Original + 7 (a=0.9)')
 
-    # 9 - SATURATED IMAGE INTERPOLATION with out 5
-    out_9 = saturation(interpolation(out_5, img, a=0.3))
+    # 9 - SATURATED IMAGE BLENDING with out 5
+    out_9 = saturation(blending(img, out_5, a=0.5))
     ax[4][1].imshow(cv.cvtColor(out_9.numpy(), cv.COLOR_BGR2RGB))
-    ax[4][1].set_title('9. Saturated interpolation: 5 + Original')
+    ax[4][1].set_title('9. Saturated blending: Original + 5 (a=0.5)')
 
-    # 10 - SATURATED IMAGE INTERPOLATION with Frei & Chen edges
+    # 10 - SATURATED IMAGE BLENDING with Frei & Chen edges
     fc_edges = frei_and_chen_edges(img)
-    out_10 = saturation(interpolation(fc_edges, img, a=0.3))
+    out_10 = saturation(blending(img, fc_edges, a=0.5))
     ax[5][0].imshow(cv.cvtColor(out_10.numpy(), cv.COLOR_BGR2RGB))
-    ax[5][0].set_title('10. Saturated interpolation: Frei & Chen edges + Original')
+    ax[5][0].set_title('10. Saturated blending: Original + Frei & Chen edges (a=0.5)')
 
-    # 11 - SATURATED IMAGE INTERPOLATION with Canny edges
+    # 11 - SATURATED IMAGE BLENDING with Canny edges
     c_edges = torch.from_numpy(cv.Canny(img.numpy(), threshold1=100, threshold2=200))
-    out_11 = saturation(interpolation(c_edges, img, a=0.3))
+    out_11 = saturation(blending(img, c_edges, a=0.5))
     ax[5][1].imshow(cv.cvtColor(out_11.numpy(), cv.COLOR_BGR2RGB))
-    ax[5][1].set_title('11. Saturated interpolation: Canny edges + Original')
+    ax[5][1].set_title('11. Saturated blending: Original + Canny edges (a=0.5)')
 
     plt.show()
 
