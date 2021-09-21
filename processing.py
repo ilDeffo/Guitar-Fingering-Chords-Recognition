@@ -30,7 +30,7 @@ def process(filename):
     # TODO: Perspective correction of image
 
     # TODO: Angular correction of images through strings (Hough lines)
-    corrected_angle_img = correct_angle(img)
+    correctd_angle_img = correct_angle(img)
 
     # 3. Returning final image
     return out
@@ -38,7 +38,7 @@ def process(filename):
 
 if __name__ == '__main__':
     # Import an image file from dataset
-    file = 'Dataset/A/A (18).jpeg'
+    file = 'Dataset/A/A (5).jpeg'
     img = cv.imread(file)
     f, ax = plt.subplots(6, 2, figsize=(12, 20))
     f.tight_layout()
