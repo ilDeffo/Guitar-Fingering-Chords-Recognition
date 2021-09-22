@@ -32,16 +32,18 @@ def correct_angle(img):
     # 250 value is suggested for Canny edges
     # lines = cv.HoughLines(edges, 1, np.pi / 180, 250)
     edges = frei_and_chen_edges(torch.from_numpy(img)).numpy()
-    # 750 value is suggested for Frei & Chen edges
+    # 700 value is suggested for Frei & Chen edges
     # -> Frei & Chen edges with this value is most robust choice!
     lines = cv.HoughLines(edges, 1, np.pi / 180, 700)
 
     if lines is None:
+        print(f"WARNING! No lines found in the image {img}. Skipping angular correction...")
         return torch.from_numpy(img)
 
     drawed_img = np.copy(img)
     # Taking diagonal of img as max length of edge
     max_l = math.sqrt(img.shape[0]**2 + img.shape[1]**2)
+    # Drawing lines on image
     for line in lines:
         rho, theta = line[0]
         a = np.cos(theta)
@@ -57,8 +59,20 @@ def correct_angle(img):
 
     cv.imwrite('houghlines.jpg', drawed_img)
     # cv.imwrite('houghlines.jpg', edges)
+    # TODO: Take the lines and do a mean of the theta param to adjust image rotation
+    mean_theta = np.mean(lines[:, :, 1])
+    # Convert to degrees
+    mean_theta = mean_theta * 180 / np.pi
+    angle = mean_theta - 90     # Angle of rotation
 
-    # TODO: Take the first 6 lines and do a mean of the params to adjust image rotation
+    h = img.shape[0]
+    w = img.shape[1]
+    (cX, cY) = (w / 2, h / 2)
+    # Rotate image around the center of the image
+    R = cv.getRotationMatrix2D((cX, cY), angle, 1.0)
+    rotated = cv.warpAffine(img, R, (w, h))
+    # TODO: Crop black borders
+    cv.imwrite('rotated.jpg', rotated)
 
     out = torch.from_numpy(img)
     return out
