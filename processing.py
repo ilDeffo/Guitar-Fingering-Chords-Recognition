@@ -7,9 +7,12 @@ import cv2 as cv
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import os
 
 from Utils.processing_operators import *
 from Utils.geometric_operators import *
+
+TMP_DIR = "Temp" + os.sep
 
 
 def process(filename):
@@ -24,24 +27,38 @@ def process(filename):
 
     # 1. Calling processing operators
     edges = frei_and_chen_edges(img)
-    out = saturation(blending(img, edges, a=0.5))
+    processed_img = saturation(blending(img, edges, a=0.5))
 
-    # 2. Calling geometric based operators
+    # 2. Detecting hands to crop region of interest
+    # TODO: Hands detection to crop region of interest
+
+    # 3. Calling geometric based operators
     # TODO: Perspective correction of image
+    # Angle correction based on strings
+    corrected_angle_img = correct_angle(processed_img)
 
-    # TODO: Angular correction of images through strings (Hough lines)
-    correctd_angle_img = correct_angle(img)
-
-    # 3. Returning final image
+    # 4. Returning final image
+    out = corrected_angle_img
     return out
 
 
 if __name__ == '__main__':
-    # Import an image file from dataset
-    file = 'Dataset/A/A (5).jpeg'
+    # Creating temporary directory
+    if not os.path.exists(TMP_DIR):
+        print(f"WARNING! Temp directory not found, creating at {TMP_DIR} ...")
+        os.mkdir(TMP_DIR)
+    # Importing an image file from dataset
+    file = 'Dataset/G/G (5).jpeg'
     img = cv.imread(file)
+    if img is None:
+        print(f"ERROR! Impossible to read image from file {file}.")
+        input("Press any key to exit.")
+        exit(1)
+
     f, ax = plt.subplots(6, 2, figsize=(12, 20))
     f.tight_layout()
+
+    # 0 - ORIGINAL IMAGE
     ax[0][0].imshow(cv.cvtColor(img, cv.COLOR_BGR2RGB))
     ax[0][0].set_title('0. Original image')
 
@@ -107,11 +124,17 @@ if __name__ == '__main__':
     ax[5][1].imshow(cv.cvtColor(out_11.numpy(), cv.COLOR_BGR2RGB))
     ax[5][1].set_title('11. Saturated blending: Original + Canny edges (a=0.5)')
 
+    # Saving image processing synthetic table
+    plt.savefig(TMP_DIR + 'image_processing_table.jpg')
     plt.show()
 
     # FINAL IMAGE PROCESSING TEST
-    cv.imshow("Input image", img.numpy())
+    # cv.imshow("Input image", img.numpy())
     processed_img = process(file)
-    cv.imshow("Processed image", processed_img.numpy())
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+    # cv.imshow("Processed image", processed_img.numpy())
+    # cv.waitKey(0)
+    # cv.destroyAllWindows()
+
+    # Saving image input and image output
+    cv.imwrite(TMP_DIR+'original.jpg', img.numpy())
+    cv.imwrite(TMP_DIR+'processed.jpg', processed_img.numpy())
