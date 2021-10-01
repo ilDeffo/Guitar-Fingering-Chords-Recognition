@@ -37,24 +37,20 @@ def saturation(img):
     return out.type(torch.uint8)
 
 
-def contrast_stretching(img):
+def contrast_stretching(img, bgr_mins, bgr_maxs, bgr_mins_1, bgr_maxs_1):
     img = img.type(torch.float32)
     if len(img.shape) != 3:
         img = img.unsqueeze(2)
     out = torch.clone(img)
 
-    # Loop over the image channels and apply Min-Max contrast stretching
-    bgr_mins = [0, 0, 0]
-    bgr_maxs = [180, 180, 180]
-
     for c in range(img.shape[2]):
-        out[:, :, c][out[:, :, c] <= bgr_mins[c]] = bgr_mins[c]
-        out[:, :, c][out[:, :, c] >= bgr_maxs[c]] = bgr_maxs[c]
+        out[:, :, c][out[:, :, c] <= bgr_mins[c]] = bgr_mins_1[c]
+        out[:, :, c][out[:, :, c] >= bgr_maxs[c]] = bgr_maxs_1[c]
 
         mask = (out[:, :, c] > bgr_mins[c]) & (out[:, :, c] < bgr_maxs[c])
-        scale_factor = (bgr_maxs[c] - bgr_mins[c]) / (255 - 0)
+        scale_factor = (bgr_maxs_1[c] - bgr_mins_1[c]) / (bgr_maxs[c] - bgr_mins[c])
 
-        out[:, :, c][mask] = (out[:, :, c][mask] - 0) * scale_factor + bgr_mins[c]
+        out[:, :, c][mask] = (out[:, :, c][mask] - bgr_mins[c]) * scale_factor + bgr_mins_1[c]
 
     return out.type(torch.uint8)
 

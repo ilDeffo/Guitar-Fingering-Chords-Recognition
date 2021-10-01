@@ -66,8 +66,14 @@ if __name__ == '__main__':
     # img = np.swapaxes(np.swapaxes(img, 0, 2), 1, 2)
     img = torch.from_numpy(img)
 
+    # Intervals for contrast stretching
+    bgr_mins = [0, 0, 0]
+    bgr_maxs = [180, 180, 180]
+    bgr_mins_1 = [0, 0, 0]
+    bgr_maxs_1 = [255, 255, 255]
+
     # 1 - CONTRAST STRETCHING
-    out_1 = contrast_stretching(img)
+    out_1 = contrast_stretching(img, bgr_mins, bgr_maxs, bgr_mins_1, bgr_maxs_1)
     ax[0][1].imshow(cv.cvtColor(out_1.numpy(), cv.COLOR_BGR2RGB))
     ax[0][1].set_title('1. Contrast stretching')
 
@@ -77,7 +83,7 @@ if __name__ == '__main__':
     ax[1][0].set_title('2. Sharpening')
 
     # 3 - SHARPENING + CONTRAST STRETCHING
-    out_3 = contrast_stretching(out_2)
+    out_3 = contrast_stretching(out_2, bgr_mins, bgr_maxs, bgr_mins_1, bgr_maxs_1)
     ax[1][1].imshow(cv.cvtColor(out_3.numpy(), cv.COLOR_BGR2RGB))
     ax[1][1].set_title('3. Sharpening + Contrast stretching')
 
