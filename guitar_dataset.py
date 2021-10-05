@@ -123,10 +123,11 @@ if __name__ == '__main__':
     ])
     dataset = GuitarDataset(r'Dataset\all_images', transform=transform)
     print(len(dataset))
-    #print(dataset[100][0])
-
-    #plt.imshow(np.moveaxis(dataset[200][0].numpy(), 0, 2))
-    #plt.show()
+    image, label = dataset[100]
+    print(image.shape)
+    print(label)
+    plt.imshow(np.moveaxis(image.numpy(), 0, 2))
+    plt.show()
 
     loader = DataLoader(dataset, 3, shuffle=True)
     dataiter = iter(loader)
