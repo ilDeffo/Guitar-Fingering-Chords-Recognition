@@ -9,7 +9,7 @@ from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 
 class EgoHandsDataset(Dataset):
-    '''Guitar Dataset'''
+    '''EgoHands dataset'''
     def __init__(self, root_dir, transform=None):
         """
         Args:
@@ -31,7 +31,7 @@ class EgoHandsDataset(Dataset):
         Funzione per ottenere un elemento del dataset
 
         :param idx: Indice dell'elemento
-        :return: Una tupla (immagine, bounding_boxes) dove bounding_boxes è un tensore 4x4
+        :return: Una tupla (immagine, bounding_boxes) dove bounding_boxes è un tensore
         '''
         if torch.is_tensor(idx):
             idx = idx.tolist()
