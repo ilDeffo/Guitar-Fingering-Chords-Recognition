@@ -78,13 +78,21 @@ if __name__ == '__main__':
     image, bounding_boxes = dataset[0]
     print(image.shape)
     print(bounding_boxes)
-    plt.imshow(np.moveaxis(image.numpy(), 0, 2))
-    plt.show()
+    #plt.imshow(np.moveaxis(image.numpy(), 0, 2))
+    #plt.show()
 
     loader = DataLoader(dataset, 3, shuffle=True, collate_fn=my_collate_fn)
     dataiter = iter(loader)
     images, bounding_boxes_tuple = next(dataiter)
     print(images.shape)
     print(bounding_boxes_tuple)
-    plt.imshow(np.moveaxis(images[0].numpy(), 0, 2))
+    #plt.imshow(np.moveaxis(images[0].numpy(), 0, 2))
+    #plt.show()
+
+    image, bounding_boxes = dataset[0]
+    im = np.moveaxis(image.numpy(), 0, 2)
+    for box in bounding_boxes:
+        box = box.numpy().astype(int)
+        cv.rectangle(im, (box[0], box[1]), (box[2], box[3]), (0, 0, 255), 2)
+    plt.imshow(cv.cvtColor(im, cv.COLOR_BGR2RGB))
     plt.show()
