@@ -58,14 +58,19 @@ class EgoHandsDataset(Dataset):
 
         bounding_boxes = bounding_boxes[~torch.isnan(bounding_boxes[:, 0]), :]
 
-        return image, bounding_boxes
+        target = {
+            'boxes': bounding_boxes,
+            'labels': torch.full((bounding_boxes.shape[0],), 1)
+        }
 
+        return image, target
 
-def my_collate_fn(data):
-    tmp = tuple(zip(*data))
-    images = tmp[0]
-    images = torch.stack(images, dim=0)
-    return images, tmp[1]
+    @staticmethod
+    def egohands_collate_fn(data):
+        tmp = tuple(zip(*data))
+        images = tmp[0]
+        images = torch.stack(images, dim=0)
+        return images, tmp[1]
 
 if __name__ == '__main__':
     from torchvision import transforms
@@ -74,23 +79,23 @@ if __name__ == '__main__':
     ])
     dataset = EgoHandsDataset('egohands_data')
     print(len(dataset))
-    image, bounding_boxes = dataset[0]
+    image, target = dataset[0]
     print(image.shape)
-    print(bounding_boxes)
+    print(target)
     #plt.imshow(np.moveaxis(image.numpy(), 0, 2))
     #plt.show()
 
-    loader = DataLoader(dataset, 3, shuffle=True, collate_fn=my_collate_fn)
+    loader = DataLoader(dataset, 3, shuffle=True, collate_fn=EgoHandsDataset.egohands_collate_fn)
     dataiter = iter(loader)
-    images, bounding_boxes_tuple = next(dataiter)
+    images, targets = next(dataiter)
     print(images.shape)
-    print(bounding_boxes_tuple)
+    print(targets)
     #plt.imshow(np.moveaxis(images[0].numpy(), 0, 2))
     #plt.show()
 
-    image, bounding_boxes = dataset[0]
+    image, target = dataset[0]
     im = np.moveaxis(image.numpy(), 0, 2)
-    for box in bounding_boxes:
+    for box in target['boxes']:
         box = box.numpy().astype(int)
         cv.rectangle(im, (box[0], box[1]), (box[2], box[3]), (0, 0, 255), 2)
     plt.imshow(cv.cvtColor(im, cv.COLOR_BGR2RGB))
