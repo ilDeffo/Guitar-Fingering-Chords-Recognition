@@ -21,7 +21,6 @@ class EgoHandsDataset(Dataset):
         self.bounding_boxes_file_name = os.path.join(root_dir, 'all_images_bounding_boxes.csv')
         self.bounding_boxes = pd.read_csv(self.bounding_boxes_file_name)
         self.transform = transform
-        self.tmp_bounding_boxes = None
 
     def __len__(self):
         return len(os.listdir(self.images_dir))
