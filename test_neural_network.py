@@ -24,6 +24,4 @@ loader = DataLoader(dataset, batch_size=3, shuffle=True, collate_fn=EgoHandsData
 dataiter = iter(loader)
 images, targets = next(dataiter)
 out = model(images, targets)
-#for x in zip(images, targets):
-#    out = model(*x)
 print(out)
