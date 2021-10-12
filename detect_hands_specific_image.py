@@ -10,6 +10,7 @@ import os
 import matplotlib.pyplot as plt
 import torch
 import torchvision
+import cv2 as cv
 
 from guitar_dataset import GuitarDataset
 
@@ -46,6 +47,9 @@ def get_hand_image_cropped(img, threshold=0.799, padding=100):
     model.eval()
 
     #TODO: Convert image in (c, h, w) tensor with floating point values in range [0, 1] to fit the model's input
+    img = img.numpy()
+    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+    img = torch.from_numpy(img)
     model_input = img.swapaxes(0, 2).swapaxes(1, 2).type(torch.float32) / 255.0
     model_output = model(model_input.unsqueeze(0))
     boxes = model_output[0]['boxes']
@@ -61,7 +65,10 @@ def get_hand_image_cropped(img, threshold=0.799, padding=100):
         print(f"WARNING! No hand was found in the image {img}. Skipping hands detection...")
         return img
 
-    cropped_image = perform_cropping(img, box, padding)
+    cropped_image = perform_cropping(img.moveaxis(2, 0), box, padding)
+    cropped_image = cropped_image.moveaxis(0, 2).numpy()
+    cropped_image = cv.cvtColor(cropped_image, cv.COLOR_RGB2BGR)
+    cropped_image = torch.from_numpy(cropped_image)
     return cropped_image
 
 if __name__ == '__main__':
