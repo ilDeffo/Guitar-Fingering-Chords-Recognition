@@ -81,7 +81,11 @@ def get_boxes_with_score_over_threshold(boxes, scores, threshold):
                 final_boxes = torch.clone(box).reshape(1, 4)
             else:
                 final_boxes = torch.cat((final_boxes, box.reshape(1, 4)))
-    return final_boxes, scores[:final_boxes.shape[0]]
+
+    if final_boxes is not None:
+        return final_boxes, scores[:final_boxes.shape[0]]
+    else:
+        return None, None
 
 
 if __name__ == '__main__':

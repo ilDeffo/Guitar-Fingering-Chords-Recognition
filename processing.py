@@ -11,6 +11,7 @@ import os
 
 from Utils.processing_operators import *
 from Utils.geometric_operators import *
+from detect_hands_specific_image import get_hand_image_cropped
 
 TMP_DIR = "Temp" + os.sep
 
@@ -31,10 +32,10 @@ def process(filename):
 
     # 2. Detecting hands to crop region of interest
     # TODO: Hands detection to crop region of interest
+    cropped_image = get_hand_image_cropped(img, threshold=0.799, padding=100)
 
-    # 3. Calling geometric based operators
-    # TODO: Perspective correction of image
-    # Angle correction based on strings
+    # 3. Calling geometric based operators to do the angle correction based on strings
+    #corrected_angle_img = correct_angle(cropped_image)
     corrected_angle_img = correct_angle(processed_img)
 
     # 4. Returning final image
