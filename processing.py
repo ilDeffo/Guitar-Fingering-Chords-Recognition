@@ -16,6 +16,32 @@ from detect_hands_specific_image import get_hand_image_cropped
 TMP_DIR = "Temp" + os.sep
 
 
+def crop_process_rotate(img):
+    """
+    Method to crop, process and rotate the image like in the general process function below.
+
+    :param img: BGR PyTorch image tensor of shape (h, w, c).
+    :return: BGR PyTorch image tensor of shape (h, w, c).
+    """
+    # 1. Detecting hand playing the chord to crop region of interest.
+    #    From experiments detection actually works better on original image,
+    #    even if the difference is around 0.001-0.003.
+    # cropped_image = get_hand_image_cropped(img, threshold=0.799, padding=100, verbose=True)
+    cropped_img = get_hand_image_cropped(img, threshold=0.799, padding=100)
+
+    # 2. Calling processing operators
+    edges = frei_and_chen_edges(cropped_img)
+    cropped_processed_img = saturation(blending(cropped_img, edges, a=0.5))
+
+    # 3. Calling geometric based operators to do the angle correction based on strings.
+    #    From experiments, finding the strings is actually easier on processed image.
+    corrected_angle_img = correct_angle(cropped_processed_img, threshold=250)
+
+    # 4. Returning final image
+    out = corrected_angle_img
+    return out
+
+
 def process(filename):
     """
     * FUNCTION TO CALL FOR IMAGE PROCESSING OF A SINGLE FILE *
@@ -31,13 +57,15 @@ def process(filename):
     processed_img = saturation(blending(img, edges, a=0.5))
 
     # 2. Detecting hand playing the chord to crop region of interest.
-    #    From experiments detection actually works better on original image,
+    #    From experiments detection actually works a little better on original image,
     #    even if the difference is around 0.001-0.003.
-    # cropped_image = get_hand_image_cropped(img, threshold=0.799, padding=100, verbose=True)
-    cropped_image = get_hand_image_cropped(processed_img, threshold=0.799, padding=100, verbose=True)
+    #cropped_image = get_hand_image_cropped(img, threshold=0.94, padding=100, verbose=True)
+    processed_cropped_image = get_hand_image_cropped(processed_img, threshold=0.799, padding=100, verbose=True)
 
-    # 3. Calling geometric based operators to do the angle correction based on strings
-    corrected_angle_img = correct_angle(cropped_image, threshold=200)
+    # 3. Calling geometric based operators to do the angle correction based on strings.
+    #    From experiments, finding the strings is actually easier on processed image.
+    #corrected_angle_img = correct_angle(cropped_image, threshold=200)
+    corrected_angle_img = correct_angle(processed_cropped_image, threshold=250)
 
     # 4. Returning final image
     out = corrected_angle_img
@@ -50,7 +78,7 @@ if __name__ == '__main__':
         print(f"WARNING! Temp directory not found, creating at {TMP_DIR} ...")
         os.mkdir(TMP_DIR)
     # Importing an image file from dataset
-    file = 'Dataset/A/A (4).jpeg'
+    file = 'Dataset/D/D (30).jpeg'
     img = cv.imread(file)
     if img is None:
         print(f"ERROR! Impossible to read image from file {file}.")

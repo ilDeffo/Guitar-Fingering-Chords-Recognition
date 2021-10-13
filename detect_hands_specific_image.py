@@ -100,7 +100,7 @@ def get_hand_image_cropped(img, threshold=0.799, padding=100, verbose=False):
     box, score = detection['box'], detection['score']
 
     if box is None or score is None:
-        print(f"WARNING! No hand was found in the image {img}. Skipping hands detection...")
+        print(f"WARNING! No hand was found in the image {img.shape}. Skipping hands detection...")
         return img
 
     if verbose:
