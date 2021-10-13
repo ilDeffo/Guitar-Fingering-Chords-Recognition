@@ -17,17 +17,7 @@ from Utils.processing_operators import frei_and_chen_edges
 TMP_DIR = "Temp" + os.sep
 
 
-def get_projective_matrix(img1, img2):
-    # TODO: Use OpenCV method to get the projective transformation matrix
-    pass
-
-
-def correct_perspective(img, matrix):
-    # TODO: Use OpenCV method to warp the image with the transformation matrix
-    pass
-
-
-def correct_angle(img):
+def correct_angle(img, threshold):
     """
     Method using HoughLines to detect strings and rotate image in order to have them parallel
     to x axis. Black borders caused by rotation are cropped.
@@ -47,8 +37,8 @@ def correct_angle(img):
     # lines = cv.HoughLines(edges, 1, np.pi / 180, 250)
     edges = frei_and_chen_edges(torch.from_numpy(img)).numpy()
     # 700 value is suggested for Frei & Chen edges
-    # -> Frei & Chen edges with this value is most robust choice!
-    lines = cv.HoughLines(edges, 1, np.pi / 180, 700)
+    # -> Frei & Chen edges with this value is the most robust choice!
+    lines = cv.HoughLines(edges, 1, np.pi / 180, threshold)
 
     if lines is None:
         print(f"WARNING! No lines found in the image {img}. Skipping angular correction...")
@@ -64,10 +54,10 @@ def correct_angle(img):
         b = np.sin(theta)
         x0 = a * rho
         y0 = b * rho
-        x1 = int(x0 + max_l * (-b))
-        y1 = int(y0 + max_l * (a))
-        x2 = int(x0 - max_l * (-b))
-        y2 = int(y0 - max_l * (a))
+        x1 = int(x0 + max_l * -b)
+        y1 = int(y0 + max_l * a)
+        x2 = int(x0 - max_l * -b)
+        y2 = int(y0 - max_l * a)
         cv.line(drawed_img, (x1, y1), (x2, y2), (0, 0, 255), 2)
         # cv.line(edges, (x1, y1), (x2, y2), (0, 0, 255), 2)
     cv.imwrite(TMP_DIR+'houghlines.jpg', drawed_img)
@@ -100,38 +90,14 @@ def correct_angle(img):
     return out
 
 
-def crop_around_center(image, width, height):
-    """
-    Given a NumPy / OpenCV 2 image, crops it to the given width and height,
-    around it's centre point
-    """
-
-    image_size = (image.shape[1], image.shape[0])
-    image_center = (int(image_size[0] * 0.5), int(image_size[1] * 0.5))
-
-    if(width > image_size[0]):
-        width = image_size[0]
-
-    if(height > image_size[1]):
-        height = image_size[1]
-
-    x1 = int(image_center[0] - width * 0.5)
-    x2 = int(image_center[0] + width * 0.5)
-    y1 = int(image_center[1] - height * 0.5)
-    y2 = int(image_center[1] + height * 0.5)
-
-    return image[y1:y2, x1:x2]
-
-
 def largest_rotated_rect(w, h, angle):
     """
     Given a rectangle of size wxh that has been rotated by 'angle' (in
     radians), computes the width and height of the largest possible
     axis-aligned rectangle within the rotated rectangle.
 
-    Original JS code by 'Andri' and Magnus Hoff from Stack Overflow
-
-    Converted to Python by Aaron Snoswell
+    The full proof of the algorithm is available at
+    https://newbedev.com/rotate-image-and-crop-out-black-bordersOriginal
     """
 
     quadrant = int(math.floor(angle / (math.pi / 2))) & 3
@@ -157,3 +123,26 @@ def largest_rotated_rect(w, h, angle):
         bb_w - 2 * x,
         bb_h - 2 * y
     )
+
+
+def crop_around_center(image, width, height):
+    """
+    Given a NumPy / OpenCV 2 image, crops it to the given width and height,
+    around its centre point.
+    """
+
+    image_size = (image.shape[1], image.shape[0])
+    image_center = (int(image_size[0] * 0.5), int(image_size[1] * 0.5))
+
+    if width > image_size[0]:
+        width = image_size[0]
+
+    if height > image_size[1]:
+        height = image_size[1]
+
+    x1 = int(image_center[0] - width * 0.5)
+    x2 = int(image_center[0] + width * 0.5)
+    y1 = int(image_center[1] - height * 0.5)
+    y2 = int(image_center[1] + height * 0.5)
+
+    return image[y1:y2, x1:x2]
