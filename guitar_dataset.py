@@ -3,7 +3,7 @@ import io
 import cv2 as cv
 import numpy as np
 import matplotlib.pyplot as plt
-
+import pandas as pd
 import torch
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
@@ -18,8 +18,10 @@ label_mappings = {
     'G': 6
 }
 
+
 class GuitarDataset(Dataset):
-    '''Guitar Dataset'''
+    """Guitar Dataset"""
+
     def __init__(self, root_dir, transform=None):
         """
         Args:
@@ -34,12 +36,12 @@ class GuitarDataset(Dataset):
         return len(os.listdir(self.root_dir))
 
     def __getitem__(self, idx):
-        '''
+        """
         Funzione per ottenere un elemento del dataset
 
         :param idx: Indice dell'elemento
         :return: Una tupla (immagine, label)
-        '''
+        """
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
@@ -53,21 +55,21 @@ class GuitarDataset(Dataset):
         img_base_name = os.path.basename(img_name)
         label = label_mappings.get(img_base_name.split(' ')[0])
 
-        if self.transform:
+        if self.transform is not None:
             image = self.transform(image)
 
         return image, label
 
 
 def get_lowest_and_highest_height_and_width_in_dataset(root_dir):
-    '''
+    """
     Funzione per ottenere l'altezza più piccola, l'altezza più grande,
     la larghezza più piccola e la larghezza più grande tra le immagini
     del dataset
 
     :param root_dir: La cartella contenente tutte le immagini del dataset
     :return: Un dizionario contenente i valori
-    '''
+    """
 
     d = {
         'lowest_height': 10000,
@@ -91,13 +93,13 @@ def get_lowest_and_highest_height_and_width_in_dataset(root_dir):
 
 
 def get_mean_and_std_of_dataset(dataset):
-    '''
+    """
     Funzione per ottenere le medie e le std dei valori dei pixel
     delle immagini del dataset per i tre canali RGB
 
     :param dataset: Il dataset
     :return: Un dizionario contenente i valori
-    '''
+    """
     imgs = [item[0] for item in dataset]
     imgs = torch.stack(imgs, dim=0)
 
@@ -118,6 +120,7 @@ def get_mean_and_std_of_dataset(dataset):
 
 if __name__ == '__main__':
     from torchvision import transforms
+
     transform = transforms.Compose([
         transforms.Resize((540, 959))
     ])
@@ -136,4 +139,3 @@ if __name__ == '__main__':
     print(labels)
     plt.imshow(np.moveaxis(images[0].numpy(), 0, 2))
     plt.show()
-
