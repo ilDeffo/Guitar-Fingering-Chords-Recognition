@@ -17,12 +17,13 @@ from Utils.processing_operators import frei_and_chen_edges
 TMP_DIR = "Temp" + os.sep
 
 
-def correct_angle(img, threshold):
+def correct_angle(img, threshold=200):
     """
     Method using HoughLines to detect strings and rotate image in order to have them parallel
     to x axis. Black borders caused by rotation are cropped.
 
     :param img: BGR PyTorch image tensor of shape (h, w, c).
+    :param threshold: Threshold to use in lines detection.
     :return: img with angle correction.
     """
     # Creating temporary directory
@@ -32,16 +33,16 @@ def correct_angle(img, threshold):
 
     img = img.numpy()
 
-    # edges = cv.Canny(img, 100, 200)
-    # 250 value is suggested for Canny edges
-    # lines = cv.HoughLines(edges, 1, np.pi / 180, 250)
+    #edges = cv.Canny(img, 100, 200)
+    # 140 (hand cropped image) or 250 (original) threshold value is suggested for Canny edges
+    # lines = cv.HoughLines(edges, 1, np.pi / 180, threshold)
     edges = frei_and_chen_edges(torch.from_numpy(img)).numpy()
-    # 700 value is suggested for Frei & Chen edges
+    # 200 (hand cropped image) or 700 (original) threshold value is suggested for Frei & Chen edges
     # -> Frei & Chen edges with this value is the most robust choice!
     lines = cv.HoughLines(edges, 1, np.pi / 180, threshold)
 
     if lines is None:
-        print(f"WARNING! No lines found in the image {img}. Skipping angular correction...")
+        print(f"WARNING! No lines found in the image {img.shape}. Skipping angular correction...")
         return torch.from_numpy(img)
 
     drawed_img = np.copy(img)

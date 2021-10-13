@@ -26,15 +26,19 @@ dest_folder = 'cropped_images'
 # con un punteggio superiore alla soglia
 threshold = 0.799
 
+# Temporary directory to save bounding boxes drawed on image
+TMP_DIR = "Temp" + os.sep
 
-def get_hand_image_cropped(img, threshold=0.799, padding=100):
+
+def detect_hand(img, threshold=0.799):
     """
-    Method to get directly the image cropped after the hands detection.
+    Method to detect the guitarist's hand playing the chord using the FasterCNN network.
 
     :param img: BGR PyTorch image tensor of shape (h, w, c).
     :param threshold: Threshold parameter for hands detection.
-    :param padding: Padding value to crop more or less img.
-    :return: img cropped around hand if it is detected, otherwise simply img.
+    :param verbose:
+    :return: Dictionary with bounding box coordinates and score of detection
+             if the hand is found, otherwise None.
     """
 
     # Directory of model's saved state
@@ -46,30 +50,73 @@ def get_hand_image_cropped(img, threshold=0.799, padding=100):
         torch.load(os.path.join(root_dir_saves, 'model_state_dict.zip'), map_location=torch.device('cpu')))
     model.eval()
 
-    #TODO: Convert image in (c, h, w) tensor with floating point values in range [0, 1] to fit the model's input
-    img = img.numpy()
-    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+    # Converting image in (c, h, w) RGB Numpy array and then back to Torch tensor with floating point
+    # values in range [0, 1] to fit the model's input
+    img = cv.cvtColor(img.numpy(), cv.COLOR_BGR2RGB)
     img = torch.from_numpy(img)
     model_input = img.swapaxes(0, 2).swapaxes(1, 2).type(torch.float32) / 255.0
     model_output = model(model_input.unsqueeze(0))
     boxes = model_output[0]['boxes']
     scores = model_output[0]['scores']
 
-    # Taking bounding boxes above threshold.
+    # Taking bounding boxes above threshold and initalizing box and score in output.
     boxes, scores = get_boxes_with_score_over_threshold(boxes, scores, threshold)
+    box, score = None, None
+
     if boxes is not None:
-        # Taking the rightmost bounding box.
-        # It's supposed to be the guitarist's left hand.
+        # Taking the rightmost bounding box, supposed to be the guitarist's left hand.
         box = get_rightmost_box(boxes)
-    else:
+
+        for idx, b in enumerate(boxes):
+            if torch.equal(b, box):
+                # Taking score of the rightest box found
+                score = scores[idx].item()
+
+            # Drawing bounding box on original image
+            b = b.detach().numpy().astype(int)
+            cv.rectangle(img.numpy(), (b[0], b[1]), (b[2], b[3]), (0, 0, 255), 2)
+
+        # Saving drawed image in temporary directory
+        img = cv.cvtColor(img.numpy(), cv.COLOR_RGB2BGR)
+        cv.imwrite(TMP_DIR + 'hands_detection.jpg', img)
+
+    return {'box': box, 'score': score}
+
+
+def get_hand_image_cropped(img, threshold=0.799, padding=100, verbose=False):
+    """
+    Method to get directly the image cropped after the hands detection.
+    It calls the method detect_hand, so be aware that an image with bounding boxes
+    drawed will be saved in the TMP_DIR specified in the script.
+
+    :param img: BGR PyTorch image tensor of shape (h, w, c).
+    :param threshold: Threshold parameter for hands detection.
+    :param padding: Padding value to crop more or less img.
+    :param verbose:
+    :return: img cropped around hand if it is detected, otherwise simply img.
+    """
+    # Getting bounding box and score
+    detection = detect_hand(img, threshold)
+    box, score = detection['box'], detection['score']
+
+    if box is None or score is None:
         print(f"WARNING! No hand was found in the image {img}. Skipping hands detection...")
         return img
 
+    if verbose:
+        print(f"Hand found in box {box} with score {score}! Cropping image around it...")
+
     cropped_image = perform_cropping(img.moveaxis(2, 0), box, padding)
-    cropped_image = cropped_image.moveaxis(0, 2).numpy()
-    cropped_image = cv.cvtColor(cropped_image, cv.COLOR_RGB2BGR)
-    cropped_image = torch.from_numpy(cropped_image)
-    return cropped_image
+    out = cropped_image.moveaxis(0, 2)
+    """
+    The following lines are needed only if image has been already converted before to fit the model's input.
+    
+    # Returning as out the cropped image converted to Torch BGR tensor of shape (h, w, c)
+    out = cv.cvtColor(out.numpy(), cv.COLOR_RGB2BGR)
+    out = torch.from_numpy(out)
+    """
+    return out
+
 
 if __name__ == '__main__':
     # Percorso del nostro dataset

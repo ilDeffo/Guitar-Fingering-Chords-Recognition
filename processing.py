@@ -30,13 +30,14 @@ def process(filename):
     edges = frei_and_chen_edges(img)
     processed_img = saturation(blending(img, edges, a=0.5))
 
-    # 2. Detecting hands to crop region of interest
-    # TODO: Hands detection to crop region of interest
-    cropped_image = get_hand_image_cropped(processed_img, threshold=0.799, padding=100)
+    # 2. Detecting hand playing the chord to crop region of interest.
+    #    From experiments detection actually works better on original image,
+    #    even if the difference is around 0.001-0.003.
+    # cropped_image = get_hand_image_cropped(img, threshold=0.799, padding=100, verbose=True)
+    cropped_image = get_hand_image_cropped(processed_img, threshold=0.799, padding=100, verbose=True)
 
     # 3. Calling geometric based operators to do the angle correction based on strings
-    corrected_angle_img = correct_angle(cropped_image, 200)
-    #corrected_angle_img = correct_angle(processed_img)
+    corrected_angle_img = correct_angle(cropped_image, threshold=200)
 
     # 4. Returning final image
     out = corrected_angle_img
@@ -49,7 +50,7 @@ if __name__ == '__main__':
         print(f"WARNING! Temp directory not found, creating at {TMP_DIR} ...")
         os.mkdir(TMP_DIR)
     # Importing an image file from dataset
-    file = 'Dataset/G/G (5).jpeg'
+    file = 'Dataset/A/A (4).jpeg'
     img = cv.imread(file)
     if img is None:
         print(f"ERROR! Impossible to read image from file {file}.")
