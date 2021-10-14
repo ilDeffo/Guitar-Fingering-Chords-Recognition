@@ -17,7 +17,7 @@ import torch
 import torchvision
 
 from guitar_dataset import GuitarDataset
-from processing import crop_process_rotate
+from processing import process_image
 from Utils.dataset_utils import save_image
 
 # Names of dataset directories
@@ -43,8 +43,12 @@ if __name__ == '__main__':
             print(f"WARNING! Dataset directory not found, creating at {dir} ...")
             os.mkdir(dir)
 
-    # Iterating over original dataset
+    # Iterating over original dataset -> Set verbose to true to see all the outputs
+    verbose = True
     for idx, (image, label) in enumerate(guitar_dataset):
+        if verbose:
+            print(f"------------ Processing and saving of image {idx} ------------")
+
         # Converting image to BGR Pytorch tensor (h, w, c) from the guitar_dataset's image format
         image = np.moveaxis(image.numpy(), 0, 2)
         image = cv.cvtColor(image, cv.COLOR_RGB2BGR)
@@ -57,12 +61,23 @@ if __name__ == '__main__':
             dest_folder = os.path.join(BASE_DIR, d)
 
             if d == "cropped_images":
-                # TODO: Complete code
-                continue
-            if d == "cropped_rotated_images":
-                # TODO: Complete code
-                continue
-            if d == "cropped_processed_rotated_images":
-                cropped_processed_rotated = crop_process_rotate(image)
+                if verbose:
+                    print("*** cropping ***")
+                cropped_processed_rotated = process_image(image, crop=True, process=False, rotate=False, verbose=verbose)
                 save_image(idx, cropped_processed_rotated, label, dest_folder)
                 continue
+            if d == "cropped_rotated_images":
+                if verbose:
+                    print("*** cropping and rotating ***")
+                cropped_processed_rotated = process_image(image, crop=True, process=False, rotate=True, verbose=verbose)
+                save_image(idx, cropped_processed_rotated, label, dest_folder)
+                continue
+            if d == "cropped_processed_rotated_images":
+                if verbose:
+                    print("*** cropping, processing and rotating ***")
+                cropped_processed_rotated = process_image(image, crop=True, process=True, rotate=True, verbose=verbose)
+                save_image(idx, cropped_processed_rotated, label, dest_folder)
+                continue
+
+        if verbose:
+            print(f"------------------------------------------------------------\n")

@@ -30,13 +30,14 @@ threshold = 0.799
 TMP_DIR = "Temp" + os.sep
 
 
-def detect_hand(img, threshold=0.799):
+def detect_hand(img, threshold=0.799, save_img=True):
     """
     Method to detect the guitarist's hand playing the chord using the FasterCNN network.
 
     :param img: BGR PyTorch image tensor of shape (h, w, c).
     :param threshold: Threshold parameter for hands detection.
     :param verbose:
+    :param save_img: If true, the algorithm saves image result in TMP_DIR.
     :return: Dictionary with bounding box coordinates and score of detection
              if the hand is found, otherwise None.
     """
@@ -76,14 +77,15 @@ def detect_hand(img, threshold=0.799):
             b = b.detach().numpy().astype(int)
             cv.rectangle(img.numpy(), (b[0], b[1]), (b[2], b[3]), (0, 0, 255), 2)
 
-        # Saving drawed image in temporary directory
-        img = cv.cvtColor(img.numpy(), cv.COLOR_RGB2BGR)
-        cv.imwrite(TMP_DIR + 'hands_detection.jpg', img)
+        if save_img:
+            # Saving drawed image in temporary directory
+            img = cv.cvtColor(img.numpy(), cv.COLOR_RGB2BGR)
+            cv.imwrite(TMP_DIR + 'hands_detection.jpg', img)
 
     return {'box': box, 'score': score}
 
 
-def get_hand_image_cropped(img, threshold=0.799, padding=100, verbose=False):
+def get_hand_image_cropped(img, threshold=0.799, padding=100, verbose=False, save_img=True):
     """
     Method to get directly the image cropped after the hands detection.
     It calls the method detect_hand, so be aware that an image with bounding boxes
@@ -93,10 +95,11 @@ def get_hand_image_cropped(img, threshold=0.799, padding=100, verbose=False):
     :param threshold: Threshold parameter for hands detection.
     :param padding: Padding value to crop more or less img.
     :param verbose:
+    :param save_img: If true, the algorithm saves image result in TMP_DIR.
     :return: img cropped around hand if it is detected, otherwise simply img.
     """
     # Getting bounding box and score
-    detection = detect_hand(img, threshold)
+    detection = detect_hand(img, threshold, save_img)
     box, score = detection['box'], detection['score']
 
     if box is None or score is None:
