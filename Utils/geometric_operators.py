@@ -100,10 +100,10 @@ def correct_angle(img, threshold=270, verbose=True, save_images=True):
         cv.imwrite(TMP_DIR+'houghlines.jpg', drawed_img)
 
     # Considering angle of rotation as the median of lines' thetas
-    mean_theta = np.median(lines[:, :, 1])
+    median_theta = np.median(lines[:, :, 1])
     # Converting to degrees
-    mean_theta = mean_theta * 180 / np.pi
-    angle = mean_theta - 90     # Real angle of rotation
+    median_theta = median_theta * 180 / np.pi
+    angle = median_theta - 90     # Real angle of rotation
 
     h = img.shape[0]
     w = img.shape[1]

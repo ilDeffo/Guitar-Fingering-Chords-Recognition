@@ -75,7 +75,7 @@ def process_file(filename):
     # 3. Calling geometric based operators to do the angle correction based on strings.
     #    From experiments, finding the strings is actually easier on processed image.
     #corrected_angle_img = correct_angle(cropped_image, threshold=200)
-    corrected_angle_img = correct_angle(processed_cropped_image, threshold=250)
+    corrected_angle_img = correct_angle(processed_cropped_image, threshold=270)
 
     # 4. Returning final image
     out = corrected_angle_img
