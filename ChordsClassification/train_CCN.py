@@ -20,7 +20,7 @@ shuffle = True
 pin_memory = True
 num_workers = 1
 
-dataset = GuitarDataset("../cropped_images/train")
+dataset = GuitarDataset("../chords_data/cropped_images/train")
 train_set, validation_set = torch.utils.data.random_split(dataset, [int(0.8 * len(dataset)), len(dataset) - int(0.8*len(dataset))])
 train_loader = DataLoader(dataset=train_set, shuffle=shuffle, batch_size=batch_size, num_workers=num_workers,
                           pin_memory=pin_memory)
