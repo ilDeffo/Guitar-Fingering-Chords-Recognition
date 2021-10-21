@@ -8,9 +8,9 @@ from tqdm import tqdm
 
 device = ("cuda" if torch.cuda.is_available() else "cpu")
 
-# transformations = transforms.Compose [
-#     ...
-# ]
+transformations = transforms.Compose([
+     transforms.Resize((100, 100))
+])
 
 num_epochs = 10
 learning_rate = 0.001
@@ -20,7 +20,7 @@ shuffle = True
 pin_memory = True
 num_workers = 1
 
-dataset = GuitarDataset("../chords_data/cropped_images/train")
+dataset = GuitarDataset("../chords_data/cropped_images/train", transform=transformations)
 train_set, validation_set = torch.utils.data.random_split(dataset, [int(0.8 * len(dataset)), len(dataset) - int(0.8*len(dataset))])
 train_loader = DataLoader(dataset=train_set, shuffle=shuffle, batch_size=batch_size, num_workers=num_workers,
                           pin_memory=pin_memory)
@@ -49,7 +49,8 @@ def check_accuracy(loader, model):
             y = y.to(device=device)
 
             scores = model(x)
-            predictions = torch.tensor([1.0 if i >= 0.5 else 0.0 for i in scores]).to(device)
+            # predictions = torch.tensor([1.0 if i >= 0.5 else 0.0 for i in scores]).to(device)
+            predictions = scores.argmax(1)
             num_correct += (predictions == y).sum()
             num_samples += predictions.size(0)
             print(
@@ -65,6 +66,7 @@ def train():
         if epoch % 2 == 0:
             loop.set_postfix(val_acc=check_accuracy(validation_loader, model))
         for imgs, labels in loop:
+            labels = torch.nn.functional.one_hot(labels).float()
             imgs = imgs.to(device)
             labels = labels.to(device)
             outputs = model(imgs)
