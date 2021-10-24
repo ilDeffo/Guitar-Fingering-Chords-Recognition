@@ -10,7 +10,10 @@ data_type = "cropped_images"
 # data_type = "cropped_rotated_images"
 # data_type = "cropped_processed_rotated_images"
 
-device = ("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu")
+if torch.cuda.is_available():
+    device = torch.device("cuda:0")
+    print(f"GPU found! Using {device}...")
 
 transformations = transforms.Compose([
     transforms.Resize((300, 300))

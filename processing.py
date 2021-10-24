@@ -16,7 +16,7 @@ from detect_hands_specific_image import get_hand_image_cropped
 TMP_DIR = "Temp" + os.sep
 
 
-def process_image(img, crop=True, process=True, rotate=True, verbose=False, save_images=False):
+def process_image(img, crop=True, process=True, process_mode=0, rotate=True, verbose=False, save_images=False):
     """
     Method to crop, process and rotate the image for chords classification.
 
@@ -38,15 +38,32 @@ def process_image(img, crop=True, process=True, rotate=True, verbose=False, save
         # cropped_image = get_hand_image_cropped(img, threshold=0.799, padding=100, verbose=True)
         out = get_hand_image_cropped(out, threshold=0.799, padding=100, verbose=verbose, save_img=save_images)
 
-    if process:
-        # 2. Calling processing operators
-        edges = frei_and_chen_edges(out)
-        out = saturation(blending(out, edges, a=0.5))
-
     if rotate:
-        # 3. Calling geometric based operators to do the angle correction based on strings.
+        # 2. Calling geometric based operators to do the angle correction based on strings.
         #    From experiments, finding the strings is actually easier on processed image.
         out = correct_angle(out, threshold=270, verbose=verbose, save_images=save_images)
+
+    if process:
+        # 3. Calling processing operators
+        if process_mode == 0:
+            # Processing n.10
+            edges = frei_and_chen_edges(out)
+            out = saturation(blending(out, edges, a=0.5))
+        if process_mode == 1:
+            # Processing n.11
+            out = out.type(torch.uint8)
+            c_edges = torch.from_numpy(cv.Canny(out.numpy(), threshold1=100, threshold2=200))
+            out = saturation(blending(out, c_edges, a=0.5))
+        if process_mode == 2:
+            # Processing n.3
+            # Intervals for contrast stretching
+            bgr_mins = [0, 0, 0]
+            bgr_maxs = [180, 180, 180]
+            bgr_mins_1 = [0, 0, 0]
+            bgr_maxs_1 = [255, 255, 255]
+
+            sharpen_img = sharpening(out)
+            out = contrast_stretching(sharpen_img, bgr_mins, bgr_maxs, bgr_mins_1, bgr_maxs_1)
 
     # 4. Returning final image
     return out
