@@ -10,11 +10,6 @@ data_type = "cropped_images"
 # data_type = "cropped_rotated_images"
 # data_type = "cropped_processed_rotated_images"
 
-device = torch.device("cpu")
-if torch.cuda.is_available():
-    device = torch.device("cuda:0")
-    print(f"GPU found! Using {device}...")
-
 transformations = transforms.Compose([
     transforms.Resize((300, 300))
 ])
@@ -38,12 +33,6 @@ validation_loader = DataLoader(dataset=validation_set, shuffle=shuffle, batch_si
 testset = GuitarDataset(f"../chords_data/{data_type}/test", transform=transformations)
 test_loader = DataLoader(dataset=testset, shuffle=False, batch_size=batch_size, num_workers=num_workers,
                          pin_memory=pin_memory)
-
-model = ChordClassificationNetwork().to(device)
-
-criterion = nn.BCELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-
 
 PATH = f"./saved_models/{data_type}.pth"
 
@@ -120,5 +109,17 @@ def test():
 
 if __name__ == "__main__":
     print(f"Working on {data_type}")
+
+    device = torch.device("cpu")
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+        torch.cuda.empty_cache()
+        print(f"GPU found! Using {device}...")
+
+    model = ChordClassificationNetwork().to(device)
+
+    criterion = nn.BCELoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
     train()
     test()
