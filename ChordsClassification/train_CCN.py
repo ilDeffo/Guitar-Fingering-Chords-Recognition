@@ -1,3 +1,5 @@
+import os
+
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -20,7 +22,7 @@ train_CNN = False
 batch_size = 32
 shuffle = True
 pin_memory = True
-num_workers = 1
+num_workers = 4
 
 dataset = GuitarDataset(f"../chords_data/{data_type}/train", transform=transformations)
 train_set, validation_set = torch.utils.data.random_split(dataset, [int(0.8 * len(dataset)),
@@ -112,9 +114,10 @@ if __name__ == "__main__":
 
     device = torch.device("cpu")
     if torch.cuda.is_available():
-        device = torch.device("cuda")
-        torch.cuda.empty_cache()
+        device = torch.device("cuda:0")
         print(f"GPU found! Using {device}...")
+        torch.cuda.empty_cache()
+        os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:64'
 
     model = ChordClassificationNetwork().to(device)
 
