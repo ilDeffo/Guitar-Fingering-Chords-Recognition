@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
-from ChordClassificationNetwork import ChordClassificationNetwork
+from ChordsClassification.ChordClassificationNetwork import ChordClassificationNetwork
 from guitar_dataset import GuitarDataset
 from tqdm import tqdm
 
@@ -13,7 +13,7 @@ data_type = "cropped_images"
 # data_type = "cropped_processed_rotated_images"
 
 transformations = transforms.Compose([
-    transforms.Resize((300, 300))
+    transforms.Resize((200, 200))
 ])
 
 num_epochs = 10

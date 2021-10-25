@@ -10,8 +10,8 @@ class ChordClassificationNetwork(nn.Module):
         self.firstConv = nn.Conv2d(3, 64, (3, 3))
         self.secondConv = nn.Conv2d(64, 64, (3, 3))
         self.pool = nn.MaxPool2d(2)
-        self.drop = nn.Dropout(0.25)
-        self.fc1 = nn.Linear(341056, 512)
+        self.drop = nn.Dropout(0.50)
+        self.fc1 = nn.Linear(147456, 512)
         self.fc2 = nn.Linear(512, 64)
         self.outLayer = nn.Linear(64, 7)
 
@@ -65,3 +65,4 @@ class ChordClassificationNetwork(nn.Module):
         # Apply softmax to x
         output = F.softmax(x, dim=1)
         return output.squeeze(1)  # maybe return output.squeeze(1) ?
+
