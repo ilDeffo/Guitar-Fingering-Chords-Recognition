@@ -98,6 +98,8 @@ def test():
     with torch.no_grad():
         for data in test_loader:
             images, labels = data
+            images = images.to(device)
+            labels = labels.to(device)
             # calculate outputs by running images through the network
             outputs = model(images)
             # the class with the highest energy is what we choose as prediction
