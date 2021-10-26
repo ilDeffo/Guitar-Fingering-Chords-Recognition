@@ -16,14 +16,18 @@ from detect_hands_specific_image import get_hand_image_cropped
 TMP_DIR = "Temp" + os.sep
 
 
-def process_image(img, crop=True, process=True, process_mode=0, rotate=True, verbose=False, save_images=False):
+def process_image(img, crop=True, process=True, process_mode=0, rotate=True, rotate_first=False, verbose=False, save_images=False):
     """
     Method to crop, process and rotate the image for chords classification.
 
     :param img: BGR PyTorch image tensor of shape (h, w, c).
     :param crop: If true, the method crops the image around the hand playing the chord.
     :param process: If true, the method applies the best processing operators found experimentally.
+    :param process_mode: Selects the type of processing to apply.
     :param rotate: If true, the method applies the angular correction respect the strings.
+    :param rotate_first: If true, the rotation is applied before processing. It can be better or not
+                         depending on type of processing applied. For instance, with default process_mode=0
+                         it's suggested to rotate after to get better results
     :param verbose:
     :param save_images: If true, the algorithm saves image results in TMP_DIR.
                         Turn false to increment performances.
@@ -38,9 +42,9 @@ def process_image(img, crop=True, process=True, process_mode=0, rotate=True, ver
         # cropped_image = get_hand_image_cropped(img, threshold=0.799, padding=100, verbose=True)
         out = get_hand_image_cropped(out, threshold=0.799, padding=100, verbose=verbose, save_img=save_images)
 
-    if rotate:
+    if rotate and rotate_first:
         # 2. Calling geometric based operators to do the angle correction based on strings.
-        #    From experiments, finding the strings is actually easier on processed image.
+        #    From experiments, finding the strings is actually easier on processed image if processed_mode=0.
         out = correct_angle(out, threshold=270, verbose=verbose, save_images=save_images)
 
     if process:
@@ -64,6 +68,9 @@ def process_image(img, crop=True, process=True, process_mode=0, rotate=True, ver
 
             sharpen_img = sharpening(out)
             out = contrast_stretching(sharpen_img, bgr_mins, bgr_maxs, bgr_mins_1, bgr_maxs_1)
+
+    if rotate and not rotate_first:
+        out = correct_angle(out, threshold=270, verbose=verbose, save_images=save_images)
 
     # 4. Returning final image
     return out

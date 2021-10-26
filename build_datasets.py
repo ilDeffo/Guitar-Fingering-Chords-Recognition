@@ -21,9 +21,10 @@ from processing import process_image
 from Utils.dataset_utils import save_image
 
 # Names of dataset directories
-DATASET_DIRS = ["cropped_images", "cropped_rotated_images", "cropped_processed_rotated_images",
+DATASET_DIRS = ["cropped_images", "cropped_processed_images", "cropped_rotated_images", "cropped_processed_rotated_images",
                 "cropped_rotated_processed_images_1", "cropped_rotated_processed_images_2"]
 # DATASET_DIRS = ["cropped_rotated_processed_images_1", "cropped_rotated_processed_images_2"]
+# DATASET_DIRS = ["cropped_processed_images"]
 
 # Base directory containing the dataset directories
 BASE_DIR = "chords_data"
@@ -68,6 +69,12 @@ if __name__ == '__main__':
                 cropped_processed_rotated = process_image(image, crop=True, process=False, rotate=False, verbose=verbose)
                 save_image(idx, cropped_processed_rotated, label, dest_folder)
                 continue
+            if d == "cropped_processed_images":
+                if verbose:
+                    print("*** cropping and processing ***")
+                cropped_processed = process_image(image, crop=True, process=True, rotate=False, verbose=verbose)
+                save_image(idx, cropped_processed, label, dest_folder)
+                continue
             if d == "cropped_rotated_images":
                 if verbose:
                     print("*** cropping and rotating ***")
@@ -83,14 +90,13 @@ if __name__ == '__main__':
             if d == "cropped_rotated_processed_images_1":
                 if verbose:
                     print("*** cropping, rotating and processing (mode 1) ***")
-                cropped_rotated_processed_1 = process_image(image, crop=True, process=True, process_mode=1, rotate=True, verbose=verbose)
+                cropped_rotated_processed_1 = process_image(image, crop=True, process=True, process_mode=1, rotate=True, rotate_first=True, verbose=verbose)
                 save_image(idx, cropped_rotated_processed_1, label, dest_folder)
                 continue
-
             if d == "cropped_rotated_processed_images_2":
                 if verbose:
                     print("*** cropping, rotating and processing (mode 2) ***")
-                cropped_rotated_processed_2 = process_image(image, crop=True, process=True, process_mode=2, rotate=True, verbose=verbose)
+                cropped_rotated_processed_2 = process_image(image, crop=True, process=True, process_mode=2, rotate=True, rotate_first=True, verbose=verbose)
                 save_image(idx, cropped_rotated_processed_2, label, dest_folder)
                 continue
 

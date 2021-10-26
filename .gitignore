@@ -17,3 +17,5 @@ venv.bak/
 
 # Pycharm stuff
 .idea/
+
+/ChordsClassification/saved_models/*

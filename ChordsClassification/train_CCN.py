@@ -8,9 +8,12 @@ from ChordsClassification.ChordClassificationNetwork import ChordClassificationN
 from guitar_dataset import GuitarDataset
 from tqdm import tqdm
 
-data_type = "cropped_images"
+# data_type = "cropped_images"
+data_type = "cropped_processed_images"
 # data_type = "cropped_rotated_images"
 # data_type = "cropped_processed_rotated_images"
+# data_type = "cropped_processed_rotated_images_1"
+# data_type = "cropped_processed_rotated_images_2"
 
 transformations = transforms.Compose([
     transforms.Resize((200, 200))
@@ -37,7 +40,6 @@ test_loader = DataLoader(dataset=testset, shuffle=False, batch_size=batch_size, 
                          pin_memory=pin_memory)
 
 PATH = f"./saved_models/{data_type}.pth"
-
 
 
 def check_accuracy(loader, model):
@@ -119,7 +121,7 @@ if __name__ == "__main__":
         device = torch.device("cuda:0")
         print(f"GPU found! Using {device}...")
         torch.cuda.empty_cache()
-        os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:64'
+        # os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:64'
 
     model = ChordClassificationNetwork().to(device)
 
