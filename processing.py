@@ -86,20 +86,22 @@ def process_file(filename):
     # Convert image to Torch tensor (h, w, c)
     img = torch.from_numpy(img)
 
-    # 1. Calling processing operators
-    edges = frei_and_chen_edges(img)
-    processed_img = saturation(blending(img, edges, a=0.5))
-
-    # 2. Detecting hand playing the chord to crop region of interest.
+    # 1. Detecting hand playing the chord to crop region of interest.
     #    From experiments detection actually works a little better on original image,
-    #    even if the difference is around 0.001-0.003.
-    #cropped_image = get_hand_image_cropped(img, threshold=0.94, padding=100, verbose=True)
-    processed_cropped_image = get_hand_image_cropped(processed_img, threshold=0.799, padding=100, verbose=True)
+    #    even if the difference is around 0.001-0.003 respect to the processed one.
+    cropped_image = get_hand_image_cropped(img, threshold=0.94, padding=100, verbose=True)
+    #processed_cropped_image = get_hand_image_cropped(processed_img, threshold=0.799, padding=100, verbose=True)
+
+    # 2. Calling processing operators
+    #edges = frei_and_chen_edges(img)
+    edges = frei_and_chen_edges(cropped_image)
+    #processed_img = saturation(blending(img, edges, a=0.5))
+    cropped_processed_image = saturation(blending(cropped_image, edges, a=0.5))
 
     # 3. Calling geometric based operators to do the angle correction based on strings.
-    #    From experiments, finding the strings is actually easier on processed image.
-    #corrected_angle_img = correct_angle(cropped_image, threshold=200)
-    corrected_angle_img = correct_angle(processed_cropped_image, threshold=270)
+    #    From experiments, finding the strings is actually easier on processed image depending on type of processing.
+    corrected_angle_img = correct_angle(cropped_processed_image, threshold=270)
+    #corrected_angle_img = correct_angle(processed_cropped_image, threshold=270)
 
     # 4. Returning final image
     out = corrected_angle_img
