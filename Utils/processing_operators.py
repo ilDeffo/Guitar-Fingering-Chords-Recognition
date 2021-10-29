@@ -57,8 +57,11 @@ def contrast_stretching(img, bgr_mins, bgr_maxs, bgr_mins_1, bgr_maxs_1):
 
 def sharpening(img):
     img = img.numpy().astype(np.float32)
+    # A >= 1; W = 9A - 1
+    A = 1.1
+    W = 9*A - 1
     kernel = np.array([[-1, -1, -1],
-                       [-1, 9, -1],
+                       [-1, W, -1],
                        [-1, -1, -1]])
     out = cv.filter2D(img, -1, kernel)
     out = np.around(out)

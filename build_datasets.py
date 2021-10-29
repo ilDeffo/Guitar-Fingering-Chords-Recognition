@@ -24,7 +24,7 @@ from Utils.dataset_utils import save_image
 DATASET_DIRS = ["cropped_images", "cropped_processed_images", "cropped_rotated_images", "cropped_processed_rotated_images",
                 "cropped_rotated_processed_images_1", "cropped_rotated_processed_images_2"]
 # DATASET_DIRS = ["cropped_rotated_processed_images_1", "cropped_rotated_processed_images_2"]
-# DATASET_DIRS = ["cropped_processed_images"]
+# DATASET_DIRS = ["cropped_rotated_processed_images_2"]
 
 # Base directory containing the dataset directories
 BASE_DIR = "chords_data"
