@@ -32,6 +32,8 @@ def get_rightmost_box(boxes, scores, score_tolerance=0.20, verbose=True):
                   f"higher score detection of {scores[max_score_idx]:.2f} VS {scores[rightmost_box_idx]:.2f}")
         rightmost_box_idx = max_score_idx
 
+    # TODO: Aggiungere un nuovo controllo: Se ho più box sopra il 96% di score prendo quella più a destra tra queste
+
     return boxes[rightmost_box_idx, :]
 
 
