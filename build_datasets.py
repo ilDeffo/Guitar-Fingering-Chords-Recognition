@@ -67,8 +67,8 @@ if __name__ == '__main__':
 
     # Set enable_restrict_process to true to process only certain images
     enable_restricted_processing = True
-    # restricted_processing_indexes = [i for i in range(503, 542)]
-    restricted_processing_indexes = [120]
+    # restricted_processing_indexes = [i for i in range(289, 314)]
+    restricted_processing_indexes = [303, 309, 314]
 
     for idx, (image, label) in enumerate(guitar_dataset):
         if enable_restricted_processing:
