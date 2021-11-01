@@ -33,6 +33,11 @@ def get_rightmost_box(boxes, scores, score_tolerance=0.20, verbose=True):
         rightmost_box_idx = max_score_idx
 
     # TODO: Aggiungere un nuovo controllo: Se ho più box sopra il 96% di score prendo quella più a destra tra queste
+    if boxes.shape[0] >= 2:
+        mask = scores > 0.96
+        if mask.sum() >= 2:
+            values = boxes[mask, 2]
+            rightmost_box_idx = torch.argmax(values)
 
     return boxes[rightmost_box_idx, :]
 
@@ -161,7 +166,7 @@ if __name__ == '__main__':
         if boxes.shape[0] > 0:
             # Prendiamo la bounding box più a destra nell'immagine.
             # Molto probabilmente sarà la bounding box della mano sinistra del chitarrista.
-            box = get_rightmost_box(boxes)
+            box = get_rightmost_box(boxes, scores)
         else:
             continue
 
