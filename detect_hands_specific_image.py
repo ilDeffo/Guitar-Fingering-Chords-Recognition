@@ -24,13 +24,13 @@ dest_folder = 'cropped_images'
 
 # Scegliamo una soglia. Conserveremo solo le bounding box
 # con un punteggio superiore alla soglia
-threshold = 0.799
+threshold = 0.79
 
 # Temporary directory to save bounding boxes drawed on image
 TMP_DIR = "Temp" + os.sep
 
 
-def detect_hand(img, threshold=0.799, save_img=True):
+def detect_hand(img, threshold=0.79, save_img=True, verbose=False):
     """
     Method to detect the guitarist's hand playing the chord using the FasterCNN network.
 
@@ -56,17 +56,18 @@ def detect_hand(img, threshold=0.799, save_img=True):
     img = cv.cvtColor(img.numpy(), cv.COLOR_BGR2RGB)
     img = torch.from_numpy(img)
     model_input = img.swapaxes(0, 2).swapaxes(1, 2).type(torch.float32) / 255.0
+
     model_output = model(model_input.unsqueeze(0))
     boxes = model_output[0]['boxes']
     scores = model_output[0]['scores']
 
     # Taking bounding boxes above threshold and initalizing box and score in output.
-    boxes, scores = get_boxes_with_score_over_threshold(boxes, scores, threshold)
+    boxes, scores = get_boxes_with_score_over_threshold(boxes, scores, threshold, verbose)
     box, score = None, None
 
     if boxes is not None:
         # Taking the rightmost bounding box, supposed to be the guitarist's left hand.
-        box = get_rightmost_box(boxes)
+        box = get_rightmost_box(boxes, scores, verbose=verbose)
 
         for idx, b in enumerate(boxes):
             if torch.equal(b, box):
@@ -85,7 +86,7 @@ def detect_hand(img, threshold=0.799, save_img=True):
     return {'box': box, 'score': score}
 
 
-def get_hand_image_cropped(img, threshold=0.799, padding=100, verbose=False, save_img=True):
+def get_hand_image_cropped(img, threshold=0.90, padding=100, verbose=False, save_img=True):
     """
     Method to get directly the image cropped after the hands detection.
     It calls the method detect_hand, so be aware that an image with bounding boxes
@@ -99,7 +100,7 @@ def get_hand_image_cropped(img, threshold=0.799, padding=100, verbose=False, sav
     :return: img cropped around hand if it is detected, otherwise simply img.
     """
     # Getting bounding box and score
-    detection = detect_hand(img, threshold, save_img)
+    detection = detect_hand(img, threshold, save_img, verbose)
     box, score = detection['box'], detection['score']
 
     if box is None or score is None:

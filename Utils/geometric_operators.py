@@ -17,6 +17,64 @@ from Utils.processing_operators import frei_and_chen_edges
 TMP_DIR = "Temp" + os.sep
 
 
+def line_points(line, offset):
+    rho, theta = line[0]
+    a = np.cos(theta)
+    b = np.sin(theta)
+    x0 = a * rho
+    y0 = b * rho
+    x1 = int(x0 + offset * -b)
+    y1 = int(y0 + offset * a)
+    x2 = int(x0 - offset * -b)
+    y2 = int(y0 - offset * a)
+    return (x1, y1), (x2, y2)
+
+
+def angle_between(p1, p2):
+    ang1 = np.arctan2(*p1[::-1])
+    ang2 = np.arctan2(*p2[::-1])
+    return np.rad2deg((ang1 - ang2) % (2 * np.pi))
+
+
+def angle_axis_x(line):
+    rho, theta = line[0]
+    # Converting to degrees
+    theta = theta * 180 / np.pi
+    angle = theta - 90  # Real angle respect to x axis
+    return angle
+
+
+def filter_lines(lines):
+    if lines is None:
+        return lines
+    # Let's filter the perpendicular lines with offsetof 40 degrees
+    offset = 30
+    '''
+    exclude_interval_1 = [90 - offset, 90 + offset]
+    exclude_interval_2 = [270 - offset, 270 + offset]
+    '''
+    exclude_interval_1 = [-90 - offset, -90 + offset]
+    exclude_interval_2 = [90 - offset, 90 + offset]
+    filtered_lines = None
+    for l in lines:
+        p1, p2 = line_points(l, offset=50)
+        # angle = angle_between(p1, p2)
+        angle = angle_axis_x(l)
+
+        if exclude_interval_1[0] <= angle <= exclude_interval_1[1]\
+                or exclude_interval_2[0] <= angle <= exclude_interval_2[1]:
+            continue
+        else:
+            if filtered_lines is None:
+                filtered_lines = np.copy(l)
+                filtered_lines = filtered_lines[np.newaxis, :]
+            else:
+                filtered_lines = np.concatenate(
+                    (filtered_lines, l[np.newaxis, :]), axis=0)
+
+    return filtered_lines
+
+
 def correct_angle(img, threshold=270, verbose=True, save_images=True):
     """
     Method using HoughLines to detect strings and rotate image in order to have them parallel
@@ -43,11 +101,14 @@ def correct_angle(img, threshold=270, verbose=True, save_images=True):
     # -> Frei & Chen edges with this value is the most robust choice!
     lines = cv.HoughLines(edges, 1, np.pi / 180, threshold)
 
+    # Removing the lines with a too much perpendicular angular value
+    lines = filter_lines(lines)
+
     # Let's try different thresholds to find lines!
     attempts = 30
     if lines is None:
         for i in range(1, attempts + 1):
-            threshold = threshold - 20*i
+            threshold = threshold - 20
             if threshold <= 20:
                 print(
                     f"WARNING! No lines found in the image {img.shape} after {attempts-1} attempts "
@@ -55,6 +116,9 @@ def correct_angle(img, threshold=270, verbose=True, save_images=True):
                 return torch.from_numpy(img)
 
             lines = cv.HoughLines(edges, 1, np.pi / 180, threshold)
+            # Removing the lines with a too much perpendicular angular value
+            lines = filter_lines(lines)
+
             if lines is not None:
                 break
             if lines is None and i == attempts:
@@ -66,15 +130,20 @@ def correct_angle(img, threshold=270, verbose=True, save_images=True):
     # Let's optimize the lines: if they are too many respect the strings we have to increment threshold.
     optimized_lines = None
     optimized_threshold = threshold
-    for i in range(1, attempts + 1):
-        if len(lines) > 6:
-            optimized_threshold = optimized_threshold + 10 * i
-            optimized_lines = cv.HoughLines(edges, 1, np.pi / 180, optimized_threshold)
-        if optimized_lines is not None:
-            if len(optimized_lines) <= 6:
-                lines = optimized_lines
-                threshold = optimized_threshold
-                break
+    if len(lines) > 6:
+        for i in range(1, attempts + 1):
+            if len(lines) > 6:
+                optimized_threshold = optimized_threshold + 20
+                optimized_lines = cv.HoughLines(edges, 1, np.pi / 180, optimized_threshold)
+
+                # Removing the lines with a too much perpendicular agnular value
+                optimized_lines = filter_lines(optimized_lines)
+
+            if optimized_lines is not None:
+                if len(optimized_lines) <= 6:
+                    lines = optimized_lines
+                    threshold = optimized_threshold
+                    break
 
     if verbose:
         print(f"{len(lines)} lines found in the image {img.shape} with threshold {threshold}!")
@@ -82,19 +151,12 @@ def correct_angle(img, threshold=270, verbose=True, save_images=True):
     drawed_img = np.copy(img)
     # Taking diagonal of img as max length of edge
     max_l = math.sqrt(img.shape[0]**2 + img.shape[1]**2)
-    # Drawing lines on image
+    angles = []
     for line in lines:
-        rho, theta = line[0]
-        a = np.cos(theta)
-        b = np.sin(theta)
-        x0 = a * rho
-        y0 = b * rho
-        x1 = int(x0 + max_l * -b)
-        y1 = int(y0 + max_l * a)
-        x2 = int(x0 - max_l * -b)
-        y2 = int(y0 - max_l * a)
-        cv.line(drawed_img, (x1, y1), (x2, y2), (0, 0, 255), 2)
-        # cv.line(edges, (x1, y1), (x2, y2), (0, 0, 255), 2)
+        p1, p2 = line_points(line, offset=max_l)
+        angles.append(angle_between(p1, p2))
+        # Drawing line on image
+        cv.line(drawed_img, p1, p2, (0, 0, 255), 2)
 
     if save_images:
         cv.imwrite(TMP_DIR+'houghlines.jpg', drawed_img)

@@ -16,7 +16,7 @@ from detect_hands_specific_image import get_hand_image_cropped
 TMP_DIR = "Temp" + os.sep
 
 
-def process_image(img, crop=True, process=True, process_mode=0, rotate=True, rotate_first=False, verbose=False, save_images=False):
+def process_image(img, crop=True, process=True, process_mode=0, rotate=True, rotate_first=True, verbose=False, save_images=False):
     """
     Method to crop, process and rotate the image for chords classification.
 
@@ -40,7 +40,7 @@ def process_image(img, crop=True, process=True, process_mode=0, rotate=True, rot
         #    From experiments detection actually works better on original image,
         #    even if the difference is around 0.001-0.003.
         # cropped_image = get_hand_image_cropped(img, threshold=0.799, padding=100, verbose=True)
-        out = get_hand_image_cropped(out, threshold=0.799, padding=100, verbose=verbose, save_img=save_images)
+        out = get_hand_image_cropped(out, threshold=0.79, padding=100, verbose=verbose, save_img=save_images)
 
     if rotate and rotate_first:
         # 2. Calling geometric based operators to do the angle correction based on strings.
@@ -89,7 +89,7 @@ def process_file(filename):
     # 1. Detecting hand playing the chord to crop region of interest.
     #    From experiments detection actually works a little better on original image,
     #    even if the difference is around 0.001-0.003 respect to the processed one.
-    cropped_image = get_hand_image_cropped(img, threshold=0.94, padding=100, verbose=True)
+    cropped_image = get_hand_image_cropped(img, threshold=0.79, padding=100, verbose=True)
     #processed_cropped_image = get_hand_image_cropped(processed_img, threshold=0.799, padding=100, verbose=True)
 
     # 2. Calling processing operators
@@ -114,7 +114,7 @@ if __name__ == '__main__':
         print(f"WARNING! Temp directory not found, creating at {TMP_DIR} ...")
         os.mkdir(TMP_DIR)
     # Importing an image file from dataset
-    file = 'Dataset/B/B (11).jpeg'
+    file = 'Dataset/F/F (135).jpeg'
     img = cv.imread(file)
     if img is None:
         print(f"ERROR! Impossible to read image from file {file}.")

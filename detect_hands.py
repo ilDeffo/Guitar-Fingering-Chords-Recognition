@@ -12,16 +12,28 @@ dest_folder = 'cropped_images'
 
 # Scegliamo una soglia. Conserveremo solo le bounding box
 # con un punteggio superiore alla soglia
-threshold = 0.8
+threshold = 0.79
 
-def get_rightmost_box(boxes):
+
+def get_rightmost_box(boxes, scores, score_tolerance=0.20, verbose=True):
     '''
-    Funzione per ottenere la bounding box più a destra nell'immagine
+    Funzione per ottenere la bounding box più a destra nell'immagine.
+    Consideriamo anche differenze esagerate in score per eliminare i falsi positivi.
     '''
 
     values = boxes[:, 2]
-    idx = torch.argmax(values)
-    return boxes[idx, :]
+    rightmost_box_idx = torch.argmax(values)
+
+    max_score_idx = torch.argmax(scores)
+    if scores[max_score_idx] - scores[rightmost_box_idx] >= score_tolerance:
+        if verbose:
+            print(f"WARNING! Not taking the rightmost hand for too much difference"
+                  f" ({scores[max_score_idx]-scores[rightmost_box_idx]:.2f}) with an "
+                  f"higher score detection of {scores[max_score_idx]:.2f} VS {scores[rightmost_box_idx]:.2f}")
+        rightmost_box_idx = max_score_idx
+
+    return boxes[rightmost_box_idx, :]
+
 
 def perform_cropping(image, box, padding):
     '''
@@ -43,6 +55,7 @@ def perform_cropping(image, box, padding):
 
     return image[:, y1:y2, x1:x2]
 
+
 def get_label_name(label):
     '''
     Funzione per ottenere il nome della classe
@@ -53,6 +66,7 @@ def get_label_name(label):
     for k, v in label_mappings.items():
         if v == label:
             return k
+
 
 def save_image(idx, image, label, dest_folder):
     '''
@@ -68,19 +82,50 @@ def save_image(idx, image, label, dest_folder):
     out_path = os.path.join(dest_folder, im_name)
     cv.imwrite(out_path, image)
 
-def get_boxes_with_score_over_threshold(boxes, scores, threshold):
+
+def get_boxes_with_score_over_threshold(boxes, scores, threshold, verbose=False):
     '''
-    Funzione per ottenere le bounding box che hanno un punteggio maggiore della soglia
+    Funzione per ottenere le bounding box che hanno un punteggio maggiore della soglia.
+    L'ottimizzazione della soglia permette di rilevare le due migliori hands detection.
 
     :return: Una tupla (boxes, scores)
     '''
     final_boxes = None
+
     for box, score in zip(boxes, scores):
         if score > threshold:
             if final_boxes is None:
                 final_boxes = torch.clone(box).reshape(1, 4)
             else:
                 final_boxes = torch.cat((final_boxes, box.reshape(1, 4)))
+
+    # Optimizing threshold to get the right hand between 4 hands detected.
+    # If we go under threshold=0.40 then we stop trying to have more than 4.
+    optimized_boxes = None
+    optimized_threshold = threshold
+    attempts = 20
+    for i in range(1, attempts + 1):
+        optimized_threshold = optimized_threshold - 0.025
+        if optimized_threshold < 0.39:
+            optimized_threshold = 0.39
+
+        for box, score in zip(boxes, scores):
+            if score > optimized_threshold:
+                if optimized_boxes is None:
+                    optimized_boxes = torch.clone(box).reshape(1, 4)
+                else:
+                    if box not in optimized_boxes:
+                        optimized_boxes = torch.cat((optimized_boxes, box.reshape(1, 4)))
+
+        if optimized_boxes is not None:
+            if (optimized_boxes.shape[0] >= 3 and boxes.shape[0] >= 3)\
+                    or (optimized_boxes.shape[0] == 2 and boxes.shape[0] == 2)\
+                    or (i == attempts):
+                final_boxes = optimized_boxes
+                threshold = optimized_threshold
+                if verbose:
+                    print(f"{boxes.shape[0]} hands found with optimized threshold {threshold} after {i} attempts!")
+                break
 
     if final_boxes is not None:
         return final_boxes, scores[:final_boxes.shape[0]]
