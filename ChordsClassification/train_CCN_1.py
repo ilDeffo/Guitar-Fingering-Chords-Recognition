@@ -4,17 +4,17 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
-from ChordsClassification.ChordClassificationNetwork import ChordClassificationNetwork
+from ChordsClassification.ChordClassificationNetwork_1 import ChordClassificationNetwork
 from guitar_dataset import GuitarDataset
 from tqdm import tqdm
 import copy
 
-data_type = "cropped_images"
+#data_type = "cropped_images"
 #data_type = "cropped_processed_images"
-# data_type = "cropped_rotated_images"
-# data_type = "cropped_processed_rotated_images"
-# data_type = "cropped_processed_rotated_images_1"
-# data_type = "cropped_processed_rotated_images_2"
+#data_type = "cropped_rotated_images"
+#data_type = "cropped_processed_rotated_images"
+data_type = "cropped_rotated_processed_images_1"
+# data_type = "cropped_rotated_processed_images_2"
 
 transformations = transforms.Compose([
     transforms.Resize((200, 200))
