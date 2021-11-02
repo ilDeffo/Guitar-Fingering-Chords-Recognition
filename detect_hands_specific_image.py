@@ -86,7 +86,7 @@ def detect_hand(img, threshold=0.79, save_img=True, verbose=False):
     return {'box': box, 'score': score}
 
 
-def get_hand_image_cropped(img, threshold=0.90, padding=100, verbose=False, save_img=True):
+def get_hand_image_cropped(img, threshold=0.799, padding=100, verbose=False, save_img=True):
     """
     Method to get directly the image cropped after the hands detection.
     It calls the method detect_hand, so be aware that an image with bounding boxes

@@ -32,6 +32,47 @@ DATASET_DIRS = ["cropped_images", "cropped_processed_images", "cropped_processed
 BASE_DIR = "chords_data"
 
 
+def choose_processing_by_dataset_name(dataset_name):
+    words = dataset_name.split('_')
+    # Default values:
+    crop, process, process_mode, rotate, rotate_first = True, False, 0, False, True
+
+    if 'cropped' in words:
+        crop = True
+    if 'rotated' in words:
+        rotate = True
+    if 'processed' in words:
+        process = True
+        if '1' in words:
+            process_mode = 1
+        if '2' in words:
+            process_mode = 2
+    if 'processed' in words and 'rotated' in words:
+        if words.index('rotated') < words.index('processed'):
+            rotate_first = True
+    return {'crop': crop, 'rotate': rotate, 'process': process,
+            'process_mode': process_mode, 'rotate_first': rotate_first}
+
+
+def process_and_save(dataset_name, verbose=True):
+    dest_folder = os.path.join(BASE_DIR, dataset_name)
+
+    # Choosing processing mode from the dataset_name
+    processing_mode = choose_processing_by_dataset_name(dataset_name)
+    crop = processing_mode['crop']
+    process = processing_mode['process']
+    process_mode = processing_mode['process_mode']
+    rotate = processing_mode['rotate']
+    rotate_first = processing_mode['rotate_first']
+
+    if verbose:
+        print(f"*** {dataset_name} ***")
+    processed = process_image(image, crop=crop, process=process, rotate=rotate,
+                              process_mode=process_mode, rotate_first=rotate_first,
+                              verbose=verbose)
+    save_image(idx, processed, label, dest_folder)
+
+
 def save_indexed_processed_image(image, idx, dest_folder,
                                  crop=True, process=True, rotate=True, verbose=True,
                                  process_mode=0, rotate_first=False):
@@ -63,12 +104,17 @@ if __name__ == '__main__':
     #                                    Set enable_threads to parallelize some processings
     verbose = True
     enable_threads = True
-    threads = []
+    if enable_threads:
+        threads = []
+    else:
+        threads = None
 
-    # Set enable_restrict_process to true to process only certain images
-    enable_restricted_processing = True
-    # restricted_processing_indexes = [i for i in range(289, 314)]
-    restricted_processing_indexes = [303, 309, 314]
+    # Set enable_restrict_process to true to process only certain difficult images
+    enable_restricted_processing = False
+    #restricted_processing_indexes = [i for i in range(855, 981)]
+    restricted_processing_indexes = [
+       863, 897
+    ]
 
     for idx, (image, label) in enumerate(guitar_dataset):
         if enable_restricted_processing:
@@ -91,180 +137,22 @@ if __name__ == '__main__':
 
         # Iterating over datasets directories
         for d in DATASET_DIRS:
-            dest_folder = os.path.join(BASE_DIR, d)
+            if enable_threads:
+                threads.append(
+                    threading.Thread(
+                    target=process_and_save,
+                    kwargs={
+                        'dataset_name': d, 'verbose': verbose
+                        }, name='process_and_save'))
 
-            if d == "cropped_images":
-                if verbose:
-                    print("*** cropping ***")
-
-                '''
-                threads_executor.submit(
-                    save_indexed_processed_image,
-                    kwargs={
-                        'image': image, 'idx': idx,
-                        'dest_folder': dest_folder,
-                        'crop': True, 'process': False,
-                        'rotate': False, 'verbose': verbose
-                    })
-                '''
-                if enable_threads:
-                    threads.append(
-                        threading.Thread(
-                            target=save_indexed_processed_image,
-                            kwargs={
-                                'image': image, 'idx': idx,
-                                'dest_folder': dest_folder,
-                                'crop': True, 'process': False,
-                                'rotate': False, 'verbose': verbose
-                            }, name='save_indexed_processed_image'))
-                else:
-                    cropped_processed_rotated = process_image(image, crop=True, process=False, rotate=False, verbose=verbose)
-                    save_image(idx, cropped_processed_rotated, label, dest_folder)
-                continue
-            if d == "cropped_processed_images":
-                if verbose:
-                    print("*** cropping and processing ***")
-                '''
-                threads_executor.submit(
-                    save_indexed_processed_image,
-                    kwargs={
-                        'image': image, 'idx': idx,
-                        'dest_folder': dest_folder,
-                        'crop': True, 'process': True,
-                        'rotate': False, 'verbose': verbose
-                    })
-                '''
-                if enable_threads:
-                    threads.append(
-                        threading.Thread(
-                            target=save_indexed_processed_image,
-                            kwargs={
-                                'image': image, 'idx': idx,
-                                'dest_folder': dest_folder,
-                                'crop': True, 'process': True,
-                                'rotate': False, 'verbose': verbose
-                            }, name='save_indexed_processed_image'))
-                else:
-                    cropped_processed = process_image(image, crop=True, process=True, rotate=False, verbose=verbose)
-                    save_image(idx, cropped_processed, label, dest_folder)
-                continue
-            if d == "cropped_rotated_images":
-                if verbose:
-                    print("*** cropping and rotating ***")
-                '''
-                threads_executor.submit(
-                    save_indexed_processed_image,
-                    kwargs={
-                        'image': image, 'idx': idx,
-                        'dest_folder': dest_folder,
-                        'crop': True, 'process': False,
-                        'rotate': True, 'verbose': verbose
-                    })
-                '''
-                if enable_threads:
-                    threads.append(
-                        threading.Thread(
-                            target=save_indexed_processed_image,
-                            kwargs={
-                                'image': image, 'idx': idx,
-                                'dest_folder': dest_folder,
-                                'crop': True, 'process': False,
-                                'rotate': True, 'verbose': verbose
-                            }, name='save_indexed_processed_image'))
-                else:
-                    cropped_processed_rotated = process_image(image, crop=True, process=False, rotate=True, verbose=verbose)
-                    save_image(idx, cropped_processed_rotated, label, dest_folder)
-                continue
-            if d == "cropped_processed_rotated_images":
-                if verbose:
-                    print("*** cropping, processing and rotating ***")
-                '''
-                threads_executor.submit(
-                    save_indexed_processed_image,
-                    kwargs={
-                        'image': image, 'idx': idx,
-                        'dest_folder': dest_folder,
-                        'crop': True, 'process': True,
-                        'rotate': True, 'verbose': verbose
-                    })
-                '''
-                if enable_threads:
-                    threads.append(
-                        threading.Thread(
-                            target=save_indexed_processed_image,
-                            kwargs={
-                                'image': image, 'idx': idx,
-                                'dest_folder': dest_folder,
-                                'crop': True, 'process': True,
-                                'rotate': True, 'verbose': verbose
-                            }, name='save_indexed_processed_image'))
-                else:
-                    cropped_processed_rotated = process_image(image, crop=True, process=True, rotate=True, verbose=verbose)
-                    save_image(idx, cropped_processed_rotated, label, dest_folder)
-                continue
-            if d == "cropped_rotated_processed_images_1":
-                if verbose:
-                    print("*** cropping, rotating and processing (mode 1) ***")
-                '''
-                threads_executor.submit(
-                    save_indexed_processed_image,
-                    kwargs={
-                        'image': image, 'idx': idx,
-                        'dest_folder': dest_folder,
-                        'crop': True, 'process': True,
-                        'rotate': True, 'process_mode': 1,
-                        'rotate_first': True, 'verbose': verbose
-                    })
-                '''
-                if enable_threads:
-                    threads.append(
-                        threading.Thread(
-                            target=save_indexed_processed_image,
-                            kwargs={
-                                'image': image, 'idx': idx,
-                                'dest_folder': dest_folder,
-                                'crop': True, 'process': True,
-                                'rotate': True, 'process_mode': 1,
-                                'rotate_first': True, 'verbose': verbose
-                            }, name='save_indexed_processed_image'))
-                else:
-                    cropped_rotated_processed_1 = process_image(image, crop=True, process=True, process_mode=1, rotate=True, rotate_first=True, verbose=verbose)
-                    save_image(idx, cropped_rotated_processed_1, label, dest_folder)
-                continue
-            if d == "cropped_rotated_processed_images_2":
-                if verbose:
-                    print("*** cropping, rotating and processing (mode 2) ***")
-                '''
-                threads_executor.submit(
-                    save_indexed_processed_image,
-                    kwargs={
-                        'image': image, 'idx': idx,
-                        'dest_folder': dest_folder,
-                        'crop': True, 'process': True,
-                        'rotate': True, 'process_mode': 2,
-                        'rotate_first': True, 'verbose': verbose
-                    })
-                '''
-                if enable_threads:
-                    threads.append(
-                        threading.Thread(
-                            target=save_indexed_processed_image,
-                            kwargs={
-                                'image': image, 'idx': idx,
-                                'dest_folder': dest_folder,
-                                'crop': True, 'process': True,
-                                'rotate': True, 'process_mode': 2,
-                                'rotate_first': True, 'verbose': verbose
-                            }, name='save_indexed_processed_image'))
-                else:
-                    cropped_rotated_processed_2 = process_image(image, crop=True, process=True, process_mode=2, rotate=True, rotate_first=True, verbose=verbose)
-                    save_image(idx, cropped_rotated_processed_2, label, dest_folder)
-                continue
+                threads[-1].start()
+            else:
+                process_and_save(dataset_name=d, verbose=verbose)
 
         if enable_threads:
-            # Start and sync threads
-            for t in threads:
-                t.start()
+            # Sync threads
+            #for t in threads:
+            #    t.start()
             for t in threads:
                 t.join()
 

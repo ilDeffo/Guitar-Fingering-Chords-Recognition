@@ -15,29 +15,65 @@ dest_folder = 'cropped_images'
 threshold = 0.79
 
 
-def get_rightmost_box(boxes, scores, score_tolerance=0.20, verbose=True):
+def get_rightmost_box(boxes, scores, box_tolerance=200, score_tolerance=0.26, top_score=0.98, verbose=True):
     '''
     Funzione per ottenere la bounding box più a destra nell'immagine.
     Consideriamo anche differenze esagerate in score per eliminare i falsi positivi.
     '''
-
     values = boxes[:, 2]
+
     rightmost_box_idx = torch.argmax(values)
+    rightmost_box_score = scores[rightmost_box_idx].item()
+    rightmost_box_offset = values[rightmost_box_idx].item()
 
     max_score_idx = torch.argmax(scores)
-    if scores[max_score_idx] - scores[rightmost_box_idx] >= score_tolerance:
-        if verbose:
-            print(f"WARNING! Not taking the rightmost hand for too much difference"
-                  f" ({scores[max_score_idx]-scores[rightmost_box_idx]:.2f}) with an "
-                  f"higher score detection of {scores[max_score_idx]:.2f} VS {scores[rightmost_box_idx]:.2f}")
-        rightmost_box_idx = max_score_idx
+    max_score = scores[max_score_idx].item()
+    max_offset = values[max_score_idx].item()
 
-    # TODO: Aggiungere un nuovo controllo: Se ho più box sopra il 96% di score prendo quella più a destra tra queste
-    if boxes.shape[0] >= 2:
-        mask = scores > 0.96
-        if mask.sum() >= 2:
-            values = boxes[mask, 2]
-            rightmost_box_idx = torch.argmax(values)
+    # Checking too much difference in score from other detections
+    if scores[max_score_idx] - scores[rightmost_box_idx] >= score_tolerance:
+        # If it's not too far from actual rightmost box, then we take it
+        if abs(max_offset - rightmost_box_offset) <= box_tolerance:
+            rightmost_box_idx = max_score_idx
+            rightmost_box_score = scores[rightmost_box_idx].item()
+            rightmost_box_offset = values[rightmost_box_idx].item()
+            if verbose:
+                print(f"WARNING! Not taking the rightmost hand for too much difference"
+                      f" ({scores[max_score_idx]-scores[rightmost_box_idx]:.2f}) with an "
+                      f"higher score detection of {scores[max_score_idx]:.2f} VS {scores[rightmost_box_idx]:.2f}")
+
+    # Checking more than 2 detections with score near the actual rightmost_box_score
+    # and selecting the rightmost box between them.
+    a = rightmost_box_score - 0.3
+    b = rightmost_box_score + 0.3
+    mask = ((scores <= b) & (scores >= a))
+    # mask = (scores <= b) & (scores >= a)
+    if boxes[mask].shape[0] >= 2:
+        values = boxes[mask, 2]
+        rightmost_box_idx = torch.argmax(values)
+        rightmost_box_score = scores[rightmost_box_idx].item()
+        rightmost_box_offset = values[rightmost_box_idx].item()
+        if verbose:
+            print(f"WARNING! Taking the rightmost box (score={rightmost_box_score:.2f}) "
+                  f"chosen between the boxes with a score in range [{a:.2f}, {b:.2f}]")
+
+    # Checking boxes with a very high score not too far from the actual rightmost box.
+    # (Final refinement)
+    top_mask = scores >= top_score
+    if boxes[top_mask].shape[0] >= 1:
+        top_values = boxes[top_mask, 2]
+        rightmost_top_box_idx = torch.argmax(top_values)
+        rightmost_top_box_score = scores[rightmost_top_box_idx].item()
+        rightmost_top_box_offset = top_values[rightmost_top_box_idx].item()
+
+        # If it's not too far from actual rightmost box, then we take it
+        if abs(rightmost_top_box_offset - rightmost_box_offset) <= box_tolerance:
+            rightmost_box_idx = rightmost_top_box_idx
+            rightmost_box_score = rightmost_top_box_score
+            rightmost_box_offset = values[rightmost_box_idx].item()
+            if verbose:
+                print(f"WARNING! Taking the rightmost box (score={rightmost_box_score:.2f}) "
+                      f"chosen between the boxes with a very high score above {top_score:.2f}")
 
     return boxes[rightmost_box_idx, :]
 
@@ -110,11 +146,11 @@ def get_boxes_with_score_over_threshold(boxes, scores, threshold, verbose=False)
     # If we go under threshold=0.40 then we stop trying to have more than 4.
     optimized_boxes = None
     optimized_threshold = threshold
-    attempts = 20
+    attempts = 22
     for i in range(1, attempts + 1):
         optimized_threshold = optimized_threshold - 0.025
-        if optimized_threshold < 0.39:
-            optimized_threshold = 0.39
+        if optimized_threshold < 0.26:
+            optimized_threshold = 0.26
 
         for box, score in zip(boxes, scores):
             if score > optimized_threshold:
@@ -131,7 +167,7 @@ def get_boxes_with_score_over_threshold(boxes, scores, threshold, verbose=False)
                 final_boxes = optimized_boxes
                 threshold = optimized_threshold
                 if verbose:
-                    print(f"{boxes.shape[0]} hands found with optimized threshold {threshold} after {i} attempts!")
+                    print(f"{final_boxes.shape[0]} hands found with optimized threshold {threshold} after {i} attempts!")
                 break
 
     if final_boxes is not None:
