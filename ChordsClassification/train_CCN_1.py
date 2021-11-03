@@ -11,10 +11,10 @@ import copy
 
 #data_type = "cropped_images"
 #data_type = "cropped_processed_images"
-#data_type = "cropped_rotated_images"
+data_type = "cropped_rotated_images"
 #data_type = "cropped_processed_rotated_images"
-data_type = "cropped_rotated_processed_images_1"
-# data_type = "cropped_rotated_processed_images_2"
+#data_type = "cropped_rotated_processed_images_1"
+#data_type = "cropped_rotated_processed_images_2"
 
 transformations = transforms.Compose([
     transforms.Resize((200, 200))
