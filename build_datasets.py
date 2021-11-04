@@ -10,6 +10,7 @@ These new datasets are necessary to train, test and evaluate the final classific
 """
 
 import os
+import re
 import cv2 as cv
 import numpy as np
 import matplotlib.pyplot as plt
@@ -22,10 +23,11 @@ from processing import process_image
 from Utils.dataset_utils import save_image
 
 # Names of dataset directories
-DATASET_DIRS = ["cropped_images", "cropped_processed_images", "cropped_processed_rotated_images",
+'''DATASET_DIRS = ["cropped_images", "cropped_processed_images", "cropped_processed_rotated_images",
                 "cropped_rotated_images",
-                "cropped_rotated_processed_images_1", "cropped_rotated_processed_images_2"]
-# DATASET_DIRS = ["cropped_rotated_processed_images_1", "cropped_rotated_processed_images_2"]
+                "cropped_rotated_processed_images_1", "cropped_rotated_processed_images_2",
+                "cropped_rotated_processed_images_3", "cropped_rotated_processed_images_4"]'''
+DATASET_DIRS = ["cropped_rotated_processed_images_3", "cropped_rotated_processed_images_4"]
 # DATASET_DIRS = ["cropped_rotated_processed_images_2"]
 
 # Base directory containing the dataset directories
@@ -43,10 +45,9 @@ def choose_processing_by_dataset_name(dataset_name):
         rotate = True
     if 'processed' in words:
         process = True
-        if '1' in words:
-            process_mode = 1
-        if '2' in words:
-            process_mode = 2
+        digits = re.findall(r'[0-9]+', dataset_name)
+        if len(digits) == 1:
+            process_mode = int(digits[0])
     if 'processed' in words and 'rotated' in words:
         if words.index('rotated') < words.index('processed'):
             rotate_first = True
@@ -54,7 +55,7 @@ def choose_processing_by_dataset_name(dataset_name):
             'process_mode': process_mode, 'rotate_first': rotate_first}
 
 
-def process_and_save(dataset_name, verbose=True):
+def process_and_save(image, dataset_name, verbose=True):
     dest_folder = os.path.join(BASE_DIR, dataset_name)
 
     # Choosing processing mode from the dataset_name
@@ -67,7 +68,7 @@ def process_and_save(dataset_name, verbose=True):
 
     if verbose:
         print(f"*** {dataset_name} ***")
-    processed = process_image(image, crop=crop, process=process, rotate=rotate,
+    processed = process_image(img=image, crop=crop, process=process, rotate=rotate,
                               process_mode=process_mode, rotate_first=rotate_first,
                               verbose=verbose)
     save_image(idx, processed, label, dest_folder)
@@ -77,7 +78,7 @@ def save_indexed_processed_image(image, idx, dest_folder,
                                  crop=True, process=True, rotate=True, verbose=True,
                                  process_mode=0, rotate_first=False):
 
-    new_image = process_image(image, crop=crop, process=process, rotate=rotate, verbose=verbose,
+    new_image = process_image(img=image, crop=crop, process=process, rotate=rotate, verbose=verbose,
                               process_mode=process_mode, rotate_first=rotate_first)
 
     save_image(idx, new_image, label, dest_folder)
@@ -110,10 +111,10 @@ if __name__ == '__main__':
         threads = None
 
     # Set enable_restrict_process to true to process only certain difficult images
-    enable_restricted_processing = False
-    #restricted_processing_indexes = [i for i in range(855, 981)]
+    enable_restricted_processing = True
+    # restricted_processing_indexes = [i for i in range(236, 256)]
     restricted_processing_indexes = [
-       863, 897
+        245
     ]
 
     for idx, (image, label) in enumerate(guitar_dataset):
@@ -142,12 +143,12 @@ if __name__ == '__main__':
                     threading.Thread(
                     target=process_and_save,
                     kwargs={
-                        'dataset_name': d, 'verbose': verbose
+                        'image': image, 'dataset_name': d, 'verbose': verbose
                         }, name='process_and_save'))
 
                 threads[-1].start()
             else:
-                process_and_save(dataset_name=d, verbose=verbose)
+                process_and_save(image=image, dataset_name=d, verbose=verbose)
 
         if enable_threads:
             # Sync threads

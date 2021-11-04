@@ -15,7 +15,7 @@ dest_folder = 'cropped_images'
 threshold = 0.79
 
 
-def get_rightmost_box(boxes, scores, box_tolerance=200, score_tolerance=0.26, top_score=0.98, verbose=True):
+def get_rightmost_box(boxes, scores, box_tolerance=200, score_tolerance=0.26, top_score=0.97, verbose=True):
     '''
     Funzione per ottenere la bounding box più a destra nell'immagine.
     Consideriamo anche differenze esagerate in score per eliminare i falsi positivi.
@@ -44,12 +44,13 @@ def get_rightmost_box(boxes, scores, box_tolerance=200, score_tolerance=0.26, to
 
     # Checking more than 2 detections with score near the actual rightmost_box_score
     # and selecting the rightmost box between them.
-    a = rightmost_box_score - 0.3
-    b = rightmost_box_score + 0.3
+    a = rightmost_box_score - 0.45
+    b = rightmost_box_score + 0.25
     mask = ((scores <= b) & (scores >= a))
     # mask = (scores <= b) & (scores >= a)
     if boxes[mask].shape[0] >= 2:
-        values = boxes[mask, 2]
+        # values = boxes[mask, 2]
+        values = torch.where(mask, boxes[:, 2], torch.full_like(boxes[:, 2], -1000))
         rightmost_box_idx = torch.argmax(values)
         rightmost_box_score = scores[rightmost_box_idx].item()
         rightmost_box_offset = values[rightmost_box_idx].item()
@@ -57,23 +58,26 @@ def get_rightmost_box(boxes, scores, box_tolerance=200, score_tolerance=0.26, to
             print(f"WARNING! Taking the rightmost box (score={rightmost_box_score:.2f}) "
                   f"chosen between the boxes with a score in range [{a:.2f}, {b:.2f}]")
 
-    # Checking boxes with a very high score not too far from the actual rightmost box.
+    # Checking boxes with a very high score or near the actual one not too far from the actual rightmost box.
     # (Final refinement)
-    top_mask = scores >= top_score
+    # top_mask = ((scores >= top_score) | mask) & (scores != rightmost_box_score)
+    top_mask = (scores >= top_score) & (scores != rightmost_box_score)
     if boxes[top_mask].shape[0] >= 1:
-        top_values = boxes[top_mask, 2]
+        # top_values = boxes[top_mask, 2]
+        top_values = torch.where(top_mask, boxes[:, 2], torch.full_like(boxes[:, 2], -1000))
         rightmost_top_box_idx = torch.argmax(top_values)
         rightmost_top_box_score = scores[rightmost_top_box_idx].item()
         rightmost_top_box_offset = top_values[rightmost_top_box_idx].item()
 
-        # If it's not too far from actual rightmost box, then we take it
-        if abs(rightmost_top_box_offset - rightmost_box_offset) <= box_tolerance:
+        # If it's not too far from actual rightmost box in score and offset, then we take it
+        if abs(rightmost_top_box_offset - rightmost_box_offset) <= box_tolerance\
+                or abs(rightmost_top_box_score - rightmost_box_score) > 0.5:
             rightmost_box_idx = rightmost_top_box_idx
             rightmost_box_score = rightmost_top_box_score
             rightmost_box_offset = values[rightmost_box_idx].item()
             if verbose:
                 print(f"WARNING! Taking the rightmost box (score={rightmost_box_score:.2f}) "
-                      f"chosen between the boxes with a very high score above {top_score:.2f}")
+                      f"chosen between the actual rightest one and the boxes with a score above {top_score:.2f}")
 
     return boxes[rightmost_box_idx, :]
 
