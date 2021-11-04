@@ -15,12 +15,19 @@ from detect_hands_specific_image import get_hand_image_cropped
 
 TMP_DIR = "Temp" + os.sep
 
+# Image file to test for processing
+FILE_NAME = 'Dataset/F/F (135).jpeg'
+# Processing mode to test
+PROCESS_MODE = 4
 
-def process_image(img, crop=True, process=True, process_mode=0, rotate=True, rotate_first=True, verbose=False, save_images=False):
+
+def process_image(img=None, filename=None, crop=True, process=True, process_mode=0, rotate=True,
+                  rotate_first=True, verbose=False, save_images=False):
     """
     Method to crop, process and rotate the image for chords classification.
 
     :param img: BGR PyTorch image tensor of shape (h, w, c).
+    :param filename: If not None, we try to read image from file.
     :param crop: If true, the method crops the image around the hand playing the chord.
     :param process: If true, the method applies the best processing operators found experimentally.
     :param process_mode: Selects the type of processing to apply.
@@ -33,6 +40,11 @@ def process_image(img, crop=True, process=True, process_mode=0, rotate=True, rot
                         Turn false to increment performances.
     :return: BGR PyTorch image tensor of shape (h, w, c).
     """
+    if filename:
+        img = cv.imread(filename)
+        # Convert image to Torch tensor (h, w, c)
+        img = torch.from_numpy(img)
+
     out = img
 
     if crop:
@@ -49,6 +61,13 @@ def process_image(img, crop=True, process=True, process_mode=0, rotate=True, rot
 
     if process:
         # 3. Calling processing operators
+
+        # Intervals for contrast stretching
+        bgr_mins = [0, 0, 0]
+        bgr_maxs = [180, 180, 180]
+        bgr_mins_1 = [0, 0, 0]
+        bgr_maxs_1 = [255, 255, 255]
+
         if process_mode == 0:
             # Processing n.10
             edges = frei_and_chen_edges(out)
@@ -60,14 +79,17 @@ def process_image(img, crop=True, process=True, process_mode=0, rotate=True, rot
             out = saturation(blending(out, c_edges, a=0.5))
         if process_mode == 2:
             # Processing n.3
-            # Intervals for contrast stretching
-            bgr_mins = [0, 0, 0]
-            bgr_maxs = [180, 180, 180]
-            bgr_mins_1 = [0, 0, 0]
-            bgr_maxs_1 = [255, 255, 255]
-
-            sharpen_img = sharpening(out)
-            out = contrast_stretching(sharpen_img, bgr_mins, bgr_maxs, bgr_mins_1, bgr_maxs_1)
+            out = sharpening(out)
+            out = contrast_stretching(out, bgr_mins, bgr_maxs, bgr_mins_1, bgr_maxs_1)
+        if process_mode == 3:
+            # Processing n.5
+            out = sharpening(out)
+            out = contrast_stretching(out, bgr_mins, bgr_maxs, bgr_mins_1, bgr_maxs_1)
+            out = frei_and_chen_edges(out)
+        if process_mode == 4:
+            # Processing n. 6
+            out = out.type(torch.uint8)
+            out = torch.from_numpy(cv.Canny(out.numpy(), threshold1=100, threshold2=200))
 
     if rotate and not rotate_first:
         out = correct_angle(out, threshold=270, verbose=verbose, save_images=save_images)
@@ -76,7 +98,7 @@ def process_image(img, crop=True, process=True, process_mode=0, rotate=True, rot
     return out
 
 
-def process_file(filename):
+'''def process_file(filename):
     """
     * FUNCTION TO CALL FOR IMAGE PROCESSING OF A SINGLE FILE *
     The experiments showed that the actual better image processing is:
@@ -105,7 +127,7 @@ def process_file(filename):
 
     # 4. Returning final image
     out = corrected_angle_img
-    return out
+    return out'''
 
 
 if __name__ == '__main__':
@@ -114,7 +136,7 @@ if __name__ == '__main__':
         print(f"WARNING! Temp directory not found, creating at {TMP_DIR} ...")
         os.mkdir(TMP_DIR)
     # Importing an image file from dataset
-    file = 'Dataset/F/F (135).jpeg'
+    file = FILE_NAME
     img = cv.imread(file)
     if img is None:
         print(f"ERROR! Impossible to read image from file {file}.")
@@ -202,7 +224,7 @@ if __name__ == '__main__':
 
     # FINAL IMAGE PROCESSING TEST
     # cv.imshow("Input image", img.numpy())
-    processed_img = process_file(file)
+    processed_img = process_image(filename=file, process_mode=PROCESS_MODE, save_images=True)
     # cv.imshow("Processed image", processed_img.numpy())
     # cv.waitKey(0)
     # cv.destroyAllWindows()
