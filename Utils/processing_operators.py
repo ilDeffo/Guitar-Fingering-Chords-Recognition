@@ -30,9 +30,39 @@ def negative(img):
     return out
 
 
+def increase_brightness(img):
+    img = img.type(torch.float32)
+    out = img * 1.8 + 10
+    # out = img + 60
+    out = torch.round(out).clip(0, 255)
+    return out.type(torch.uint8)
+
+
+def decrease_brightness(img):
+    img = img.type(torch.float32)
+    out = img * 0.8 - 10
+    out = torch.round(out).clip(0, 255)
+    return out.type(torch.uint8)
+
+
 def saturation(img):
     img = img.type(torch.float32)
-    out = img * 1.8 - 10
+    # Let's increase the saturation value in HSV space
+    hsv = cv.cvtColor(img.numpy(), cv.COLOR_BGR2HSV)
+    hsv[:, :, 1] = hsv[:, :, 1]*1.5
+    out = cv.cvtColor(hsv, cv.COLOR_HSV2BGR)
+    out = torch.from_numpy(out)
+    out = torch.round(out).clip(0, 255)
+    return out.type(torch.uint8)
+
+
+def desaturation(img):
+    img = img.type(torch.float32)
+    # Let's descrease the saturation value in HSV space
+    hsv = cv.cvtColor(img.numpy(), cv.COLOR_BGR2HSV)
+    hsv[:, :, 1] = hsv[:, :, 1] * 0.5
+    out = cv.cvtColor(hsv, cv.COLOR_HSV2BGR)
+    out = torch.from_numpy(out)
     out = torch.round(out).clip(0, 255)
     return out.type(torch.uint8)
 

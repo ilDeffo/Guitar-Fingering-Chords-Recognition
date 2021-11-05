@@ -14,8 +14,12 @@ dest_folder = 'cropped_images'
 # con un punteggio superiore alla soglia
 threshold = 0.79
 
+# If you have right hand detection problems, try this params:
+# box_tolerance = 550, 200, 400
+# top_score = 0.955, 0.975, 0.985
 
-def get_rightmost_box(boxes, scores, box_tolerance=200, score_tolerance=0.26, top_score=0.97, verbose=True):
+
+def get_rightmost_box(boxes, scores, box_tolerance=550, score_tolerance=0.26, top_score=0.975, verbose=True):
     '''
     Funzione per ottenere la bounding box più a destra nell'immagine.
     Consideriamo anche differenze esagerate in score per eliminare i falsi positivi.
@@ -44,7 +48,7 @@ def get_rightmost_box(boxes, scores, box_tolerance=200, score_tolerance=0.26, to
 
     # Checking more than 2 detections with score near the actual rightmost_box_score
     # and selecting the rightmost box between them.
-    a = rightmost_box_score - 0.45
+    a = rightmost_box_score - 0.25
     b = rightmost_box_score + 0.25
     mask = ((scores <= b) & (scores >= a))
     # mask = (scores <= b) & (scores >= a)
@@ -71,7 +75,7 @@ def get_rightmost_box(boxes, scores, box_tolerance=200, score_tolerance=0.26, to
 
         # If it's not too far from actual rightmost box in score and offset, then we take it
         if abs(rightmost_top_box_offset - rightmost_box_offset) <= box_tolerance\
-                or abs(rightmost_top_box_score - rightmost_box_score) > 0.5:
+                or abs(rightmost_top_box_score - rightmost_box_score) > 0.52:
             rightmost_box_idx = rightmost_top_box_idx
             rightmost_box_score = rightmost_top_box_score
             rightmost_box_offset = values[rightmost_box_idx].item()
