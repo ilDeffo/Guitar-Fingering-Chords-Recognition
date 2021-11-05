@@ -27,8 +27,22 @@ from Utils.dataset_utils import save_image
                 "cropped_rotated_images",
                 "cropped_rotated_processed_images_1", "cropped_rotated_processed_images_2",
                 "cropped_rotated_processed_images_3", "cropped_rotated_processed_images_4"]'''
-DATASET_DIRS = ["cropped_rotated_processed_images_3", "cropped_rotated_processed_images_4"]
+DATASET_DIRS = ["cropped_processed_images", "cropped_processed_rotated_images",
+                "cropped_rotated_processed_images_0", "cropped_rotated_processed_images_1",
+                "cropped_rotated_processed_images_5", "cropped_rotated_processed_images_6"]
 # DATASET_DIRS = ["cropped_rotated_processed_images_2"]
+
+# Set verbose to true to see all the outputs
+verbose = True
+# Set enable_threads to parallelize some processings
+enable_threads = True
+
+# Set enable_restrict_process to true to process only certain difficult images
+enable_restricted_processing = False
+restricted_processing_indexes = [i for i in range(678, 981)]
+'''restricted_processing_indexes = [
+    969
+]'''
 
 # Base directory containing the dataset directories
 BASE_DIR = "chords_data"
@@ -101,22 +115,12 @@ if __name__ == '__main__':
             print(f"WARNING! Dataset directory not found, creating at {dir} ...")
             os.mkdir(dir)
 
-    # Iterating over original dataset -> Set verbose to true to see all the outputs
-    #                                    Set enable_threads to parallelize some processings
-    verbose = True
-    enable_threads = True
     if enable_threads:
         threads = []
     else:
         threads = None
 
-    # Set enable_restrict_process to true to process only certain difficult images
-    enable_restricted_processing = True
-    # restricted_processing_indexes = [i for i in range(236, 256)]
-    restricted_processing_indexes = [
-        245
-    ]
-
+    # Iterating over original dataset
     for idx, (image, label) in enumerate(guitar_dataset):
         if enable_restricted_processing:
             if idx not in restricted_processing_indexes:

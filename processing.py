@@ -71,12 +71,14 @@ def process_image(img=None, filename=None, crop=True, process=True, process_mode
         if process_mode == 0:
             # Processing n.10
             edges = frei_and_chen_edges(out)
-            out = saturation(blending(out, edges, a=0.5))
+            out = blending(out, edges, a=0.5)
+            out = saturation(increase_brightness(out))
         if process_mode == 1:
             # Processing n.11
             out = out.type(torch.uint8)
             c_edges = torch.from_numpy(cv.Canny(out.numpy(), threshold1=100, threshold2=200))
-            out = saturation(blending(out, c_edges, a=0.5))
+            out = blending(out, c_edges, a=0.5)
+            out = saturation(increase_brightness(out))
         if process_mode == 2:
             # Processing n.3
             out = sharpening(out)
@@ -90,6 +92,19 @@ def process_image(img=None, filename=None, crop=True, process=True, process_mode
             # Processing n. 6
             out = out.type(torch.uint8)
             out = torch.from_numpy(cv.Canny(out.numpy(), threshold1=100, threshold2=200))
+        if process_mode == 5:
+            # Processing n.8
+            out = out.type(torch.uint8)
+            c_edges = torch.from_numpy(cv.Canny(out.numpy(), threshold1=100, threshold2=200))
+            out = blending(out, negative(c_edges), a=0.75)
+            out = saturation(decrease_brightness(out))
+        if process_mode == 6:
+            # Processing n.9
+            sharpen_img = sharpening(out)
+            sharpen_stretched = contrast_stretching(sharpen_img, bgr_mins, bgr_maxs, bgr_mins_1, bgr_maxs_1)
+            edges = frei_and_chen_edges(sharpen_stretched)
+            out = blending(out, edges, a=0.5)
+            out = saturation(increase_brightness(out))
 
     if rotate and not rotate_first:
         out = correct_angle(out, threshold=270, verbose=verbose, save_images=save_images)
@@ -164,27 +179,31 @@ if __name__ == '__main__':
     ax[3][1].imshow(cv.cvtColor(out_7.numpy(), cv.COLOR_BGR2RGB))
     ax[3][1].set_title('7. Negative Canny edges')
 
-    # 8 - SATURATED IMAGE BLENDING with out 6
-    out_8 = saturation(blending(img, negative(out_6), a=0.9))
+    # 8 - SATURATED DARK IMAGE BLENDING with out 6
+    out_8 = blending(img, negative(out_6), a=0.75)
+    out_8 = saturation(decrease_brightness(out_8))
     ax[4][0].imshow(cv.cvtColor(out_8.numpy(), cv.COLOR_BGR2RGB))
-    ax[4][0].set_title('8. Saturated blending: Original + 7 (a=0.9)')
+    ax[4][0].set_title('8. Saturated dark blending: Original + 7 (a=0.75)')
 
-    # 9 - SATURATED IMAGE BLENDING with out 5
-    out_9 = saturation(blending(img, out_5, a=0.5))
+    # 9 - SATURATED LIGHT IMAGE BLENDING with out 5
+    out_9 = blending(img, out_5, a=0.5)
+    out_9 = saturation(increase_brightness(out_9))
     ax[4][1].imshow(cv.cvtColor(out_9.numpy(), cv.COLOR_BGR2RGB))
-    ax[4][1].set_title('9. Saturated blending: Original + 5 (a=0.5)')
+    ax[4][1].set_title('9. Saturated light blending: Original + 5 (a=0.5)')
 
-    # 10 - SATURATED IMAGE BLENDING with Frei & Chen edges
+    # 10 - SATURATED LIGHT IMAGE BLENDING with Frei & Chen edges
     fc_edges = frei_and_chen_edges(img)
-    out_10 = saturation(blending(img, fc_edges, a=0.5))
+    out_10 = blending(img, fc_edges, a=0.5)
+    out_10 = saturation(increase_brightness(out_10))
     ax[5][0].imshow(cv.cvtColor(out_10.numpy(), cv.COLOR_BGR2RGB))
-    ax[5][0].set_title('10. Saturated blending: Original + Frei & Chen edges (a=0.5)')
+    ax[5][0].set_title('10. Saturated light blending: Original + Frei & Chen edges (a=0.5)')
 
-    # 11 - SATURATED IMAGE BLENDING with Canny edges
+    # 11 - SATURATED LIGHT IMAGE BLENDING with Canny edges
     c_edges = torch.from_numpy(cv.Canny(img.numpy(), threshold1=100, threshold2=200))
-    out_11 = saturation(blending(img, c_edges, a=0.5))
+    out_11 = blending(img, c_edges, a=0.5)
+    out_11 = saturation(increase_brightness(out_11))
     ax[5][1].imshow(cv.cvtColor(out_11.numpy(), cv.COLOR_BGR2RGB))
-    ax[5][1].set_title('11. Saturated blending: Original + Canny edges (a=0.5)')
+    ax[5][1].set_title('11. Saturated light blending: Original + Canny edges (a=0.5)')
 
     # Saving image processing synthetic table
     plt.savefig(TMP_DIR + 'image_processing_table.jpg')
