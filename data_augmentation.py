@@ -54,6 +54,9 @@ transfomations = [
 ]
 
 for idx, img_name in enumerate(img_names):
+    if idx == 10:
+        import sys
+        sys.exit(0)
     img_path = os.path.join(f'chords_data/{data_type}/{img_name}')
 
     image = cv.imread(img_path)
@@ -64,20 +67,29 @@ for idx, img_name in enumerate(img_names):
 
     img_base_name = os.path.basename(img_name)
     label = label_mappings.get(img_base_name.split(' ')[0])
+    label_name = get_label_name(label)
 
-    new_images = [image]
-    for t in transfomations:
+    for idx_1, t in enumerate(transfomations):
         new_im = image.clone()
         new_im = t(new_im)
-        new_images.append(new_im)
-
-    for idx_1, image in enumerate(new_images):
-        image = np.moveaxis(image.numpy(), 0, 2)
-        image = cv.cvtColor(image, cv.COLOR_RGB2BGR)
-        image *= 255
-        image = image.round().clip(0, 255).astype(np.uint8)
-        label_name = get_label_name(label)
-        im_name = f'{label_name} ({idx}_{idx_1}).jpeg'
+        new_im = np.moveaxis(new_im.numpy(), 0, 2)
+        new_im = cv.cvtColor(new_im, cv.COLOR_RGB2BGR)
+        new_im *= 255
+        new_im = new_im.round().clip(0, 255).astype(np.uint8)
+        im_name = f'{label_name} ({idx}_{idx_1+1}).jpeg'
         out_path = f'{augmented_dataset_dir}/{im_name}'
-        cv.imwrite(out_path, image)
+        cv.imwrite(out_path, new_im)
+
+    image = np.moveaxis(image.numpy(), 0, 2)
+    image = cv.cvtColor(image, cv.COLOR_RGB2BGR)
+    image *= 255
+    image = image.round().clip(0, 255).astype(np.uint8)
+    im_name = f'{label_name} ({idx}_0).jpeg'
+    out_path = f'{augmented_dataset_dir}/{im_name}'
+    cv.imwrite(out_path, image)
+
+
+
+
+
 
