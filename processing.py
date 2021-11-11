@@ -16,9 +16,9 @@ from detect_hands_specific_image import get_hand_image_cropped
 TMP_DIR = "Temp" + os.sep
 
 # Image file to test for processing
-FILE_NAME = 'Dataset/F/F (135).jpeg'
+FILE_NAME = 'Dataset/B/B (7).jpeg'
 # Processing mode to test
-PROCESS_MODE = 4
+PROCESS_MODE = 5
 
 
 def process_image(img=None, filename=None, crop=True, process=True, process_mode=0, rotate=True,
