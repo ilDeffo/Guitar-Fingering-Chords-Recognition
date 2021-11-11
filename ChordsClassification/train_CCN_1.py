@@ -1,4 +1,5 @@
 import os
+import random
 
 import torch
 import torch.nn as nn
@@ -9,19 +10,30 @@ from guitar_dataset import GuitarDataset
 from tqdm import tqdm
 import copy
 
-#data_type = "cropped_images"
+# data_type = "cropped_images"
 #data_type = "cropped_processed_images"
-#data_type = "cropped_rotated_images"
+data_type = "cropped_rotated_images"
 #data_type = "cropped_processed_rotated_images"
 #data_type = "cropped_rotated_processed_images_1"
 #data_type = "cropped_rotated_processed_images_2"
 #data_type = "cropped_rotated_processed_images_3"
 #data_type = "cropped_rotated_processed_images_4"
 #data_type = "cropped_rotated_processed_images_5"
-data_type = "cropped_rotated_processed_images_6"
+#data_type = "cropped_rotated_processed_images_6"
 
 transformations = transforms.Compose([
-    transforms.Resize((200, 200))
+    transforms.Resize((200, 200)),
+    transforms.RandomApply([
+        transforms.ColorJitter(brightness=0.2, contrast=0, saturation=0, hue=0)], 0.25),
+    transforms.RandomApply([
+        transforms.ColorJitter(brightness=0, contrast=0.2, saturation=0, hue=0)], 0.25),
+    transforms.RandomApply([
+        transforms.ColorJitter(brightness=0, contrast=0, saturation=0.2, hue=0)], 0.25),
+    transforms.RandomApply([
+        transforms.ColorJitter(brightness=0, contrast=0, saturation=0, hue=0.2)], 0.25),
+    transforms.RandomApply([
+        transforms.GaussianBlur(3)], 0.25),
+    transforms.RandomAdjustSharpness(random.uniform(0.5, 1.5), 0.25)
 ])
 
 num_epochs = 20
@@ -66,7 +78,7 @@ if __name__ == "__main__":
 
     csv_header = ['Classification loss']
 
-    csvfile = open(results_dir + data_type + '_our_nn_loss.csv', 'w', newline='')
+    csvfile = open(results_dir + 'augmented_' + data_type + '_our_nn_loss.csv', 'w', newline='')
     writer = csv.writer(csvfile)
     writer.writerow(csv_header)
 
@@ -76,7 +88,7 @@ if __name__ == "__main__":
 
     for epoch in range(num_epochs):
         print('-' * 10)
-        print('Epoch {}/{}'.format(epoch, num_epochs - 1))
+        print('Epoch {}/{}'.format(epoch + 1, num_epochs))
 
         for phase in ['train', 'val']:
             if phase == 'train':
@@ -133,7 +145,7 @@ if __name__ == "__main__":
     import pandas as pd
 
     df = pd.DataFrame({'predictions': predictions.cpu().numpy(), 'y_true': y.cpu().numpy()})
-    df.to_csv(results_dir + data_type + '_our_nn_predictions__ytrue.csv', index=False)
+    df.to_csv(results_dir + 'augmented_' + data_type + '_our_nn_predictions__ytrue.csv', index=False)
     preds = df['predictions'].values
     y_true = df['y_true'].values
     reverse_label_mappings = {
@@ -152,7 +164,7 @@ if __name__ == "__main__":
         results_dict[reverse_label_mappings[i]].append((y_true == i).sum())
     df = pd.DataFrame(results_dict, index=['num_correct', 'num_samples'])
     df = df.T
-    df.to_csv(results_dir + data_type + '_our_nn_performances.csv')
+    df.to_csv(results_dir + 'augmented_' + data_type + '_our_nn_performances.csv')
 
     from sklearn.metrics import confusion_matrix
     from sklearn.metrics import accuracy_score
@@ -163,7 +175,7 @@ if __name__ == "__main__":
     print(confusion_matrix(y_true, preds))
     accuracy = accuracy_score(y_true, preds)
     print('Accuracy:', accuracy)
-    with open(results_dir + data_type + '_our_nn_accuracy.txt', 'wt') as f:
+    with open(results_dir + 'augmented_' + data_type + '_our_nn_accuracy.txt', 'wt') as f:
         f.write(str(accuracy))
 
     precision = precision_score(y_true, preds, average=None)
@@ -180,4 +192,4 @@ if __name__ == "__main__":
         'recall': recall,
         'f1_score': f1_score
     }, index=['A', 'B', 'C', 'D', 'E', 'F', 'G'])
-    df.to_csv(results_dir + data_type + '_our_nn_precision_recall_f1_score.csv')
+    df.to_csv(results_dir + 'augmented_' + data_type + '_our_nn_precision_recall_f1_score.csv')
