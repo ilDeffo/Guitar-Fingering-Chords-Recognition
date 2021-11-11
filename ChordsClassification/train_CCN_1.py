@@ -135,17 +135,23 @@ if __name__ == "__main__":
     print('--------- Evaluating performance and saving results ------------')
     model = ChordClassificationNetwork()
     model.load_state_dict(torch.load(PATH, map_location=torch.device('cpu')))
-    testloader = DataLoader(dataset=testset, shuffle=False, batch_size=len(testset), num_workers=num_workers)
 
-    dataiter = iter(testloader)
-    x, y = next(dataiter)
-    scores = model(x)
-    predictions = scores.argmax(1)
+    testloader = DataLoader(dataset=testset, shuffle=False, batch_size=batch_size, num_workers=num_workers)
+    preds = []
+    y_true = []
+    for x, y in test_loader:
+        scores = model(x)
+        predictions = scores.argmax(1)
+        preds.append(predictions)
+        y_true.append(y)
+
+    preds = torch.cat(preds)
+    y_true = torch.cat(y_true)
 
     import pandas as pd
 
-    df = pd.DataFrame({'predictions': predictions.cpu().numpy(), 'y_true': y.cpu().numpy()})
-    df.to_csv(results_dir + 'augmented_' + data_type + '_our_nn_predictions__ytrue.csv', index=False)
+    df = pd.DataFrame({'predictions': preds.cpu().numpy(), 'y_true': y_true.cpu().numpy()})
+    df.to_csv(results_dir + data_type + '_our_nn_predictions__ytrue.csv', index=False)
     preds = df['predictions'].values
     y_true = df['y_true'].values
     reverse_label_mappings = {
