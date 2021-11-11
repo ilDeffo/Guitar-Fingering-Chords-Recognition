@@ -1,5 +1,6 @@
 import os
 import io
+import random
 import cv2 as cv
 import numpy as np
 import matplotlib.pyplot as plt
@@ -31,7 +32,7 @@ def get_label_name(label):
         if v == label:
             return k
 
-data_type = "cropped_images"
+#data_type = "cropped_images"
 #data_type = "cropped_processed_images"
 #data_type = "cropped_rotated_images"
 #data_type = "cropped_processed_rotated_images"
@@ -39,54 +40,55 @@ data_type = "cropped_images"
 #data_type = "cropped_rotated_processed_images_2"
 #data_type = "cropped_rotated_processed_images_3"
 #data_type = "cropped_rotated_processed_images_4"
-#data_type = "cropped_rotated_processed_images_5"
+data_type = "cropped_rotated_processed_images_5"
 #data_type = "cropped_rotated_processed_images_6"
 
-augmented_dataset_dir = f'chords_data/{data_type}_augmented'
+extended_dataset_dir = f'chords_data/{data_type}_extended'
 
-if not os.path.exists(augmented_dataset_dir):
-    os.mkdir(augmented_dataset_dir)
+if __name__ == "__main__":
+    if not os.path.exists(extended_dataset_dir):
+        os.mkdir(extended_dataset_dir)
 
-img_names = [img_name for img_name in os.listdir(f'chords_data/{data_type}') if img_name.endswith('.jpeg')]
+    img_names = [img_name for img_name in os.listdir(f'chords_data/{data_type}') if img_name.endswith('.jpeg')
+                 and not os.path.isdir(img_name)]
 
-transfomations = [
-    transforms.ColorJitter(brightness=.5, hue=.3)
-]
+    transfomations = [
+        transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2),
+        transforms.GaussianBlur(3),
+        transforms.RandomAdjustSharpness(random.uniform(0.5, 1.5), 1)
+    ]
 
-for idx, img_name in enumerate(img_names):
-    if idx == 10:
-        import sys
-        sys.exit(0)
-    img_path = os.path.join(f'chords_data/{data_type}/{img_name}')
+    for idx, img_name in enumerate(img_names):
+        img_path = os.path.join(f'chords_data/{data_type}/{img_name}')
 
-    image = cv.imread(img_path)
-    image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
-    image = np.moveaxis(image, 2, 0)
-    image = image.astype(np.float32) / 255.0
-    image = torch.from_numpy(image)
+        image = cv.imread(img_path)
+        image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
+        image = np.moveaxis(image, 2, 0)
+        image = image.astype(np.float32) / 255.0
+        image = torch.from_numpy(image)
 
-    img_base_name = os.path.basename(img_name)
-    label = label_mappings.get(img_base_name.split(' ')[0])
-    label_name = get_label_name(label)
+        img_base_name = os.path.basename(img_name)
+        label = label_mappings.get(img_base_name.split(' ')[0])
+        label_name = get_label_name(label)
 
-    for idx_1, t in enumerate(transfomations):
-        new_im = image.clone()
-        new_im = t(new_im)
-        new_im = np.moveaxis(new_im.numpy(), 0, 2)
-        new_im = cv.cvtColor(new_im, cv.COLOR_RGB2BGR)
-        new_im *= 255
-        new_im = new_im.round().clip(0, 255).astype(np.uint8)
-        im_name = f'{label_name} ({idx}_{idx_1+1}).jpeg'
-        out_path = f'{augmented_dataset_dir}/{im_name}'
-        cv.imwrite(out_path, new_im)
+        for idx_1, t in enumerate(transfomations):
+            new_im = image.clone()
+            new_im = t(new_im)
+            new_im = np.moveaxis(new_im.numpy(), 0, 2)
+            new_im = cv.cvtColor(new_im, cv.COLOR_RGB2BGR)
+            new_im *= 255
+            new_im = new_im.round().clip(0, 255).astype(np.uint8)
+            im_name = f'{label_name} ({idx}_{idx_1+1}).jpeg'
+            out_path = f'{extended_dataset_dir}/{im_name}'
+            cv.imwrite(out_path, new_im)
 
-    image = np.moveaxis(image.numpy(), 0, 2)
-    image = cv.cvtColor(image, cv.COLOR_RGB2BGR)
-    image *= 255
-    image = image.round().clip(0, 255).astype(np.uint8)
-    im_name = f'{label_name} ({idx}_0).jpeg'
-    out_path = f'{augmented_dataset_dir}/{im_name}'
-    cv.imwrite(out_path, image)
+        image = np.moveaxis(image.numpy(), 0, 2)
+        image = cv.cvtColor(image, cv.COLOR_RGB2BGR)
+        image *= 255
+        image = image.round().clip(0, 255).astype(np.uint8)
+        im_name = f'{label_name} ({idx}_0).jpeg'
+        out_path = f'{extended_dataset_dir}/{im_name}'
+        cv.imwrite(out_path, image)
 
 
 

@@ -3,13 +3,14 @@ import random
 from shutil import copyfile, copy2
 
 
-DATASET_DIRS = ["cropped_images", "cropped_processed_images", "cropped_processed_rotated_images",
-                "cropped_rotated_images", "cropped_rotated_processed_images_0",
-                "cropped_rotated_processed_images_1", "cropped_rotated_processed_images_2",
-                "cropped_rotated_processed_images_3", "cropped_rotated_processed_images_4",
-                "cropped_rotated_processed_images_5", "cropped_rotated_processed_images_6"
-                ]
-
+# DATASET_DIRS = ["cropped_images", "cropped_processed_images", "cropped_processed_rotated_images",
+#                 "cropped_rotated_images", "cropped_rotated_processed_images_0",
+#                 "cropped_rotated_processed_images_1", "cropped_rotated_processed_images_2",
+#                 "cropped_rotated_processed_images_3", "cropped_rotated_processed_images_4",
+#                 "cropped_rotated_processed_images_5", "cropped_rotated_processed_images_6"
+#                 ]
+DATASET_DIRS = ["cropped_images_extended", "cropped_rotated_images_extended",
+                "cropped_rotated_processed_images_5_extended"]
 
 if __name__ == "__main__":
     for DATA_DIR in DATASET_DIRS:
