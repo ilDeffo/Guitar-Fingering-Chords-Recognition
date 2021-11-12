@@ -33,14 +33,14 @@ if augmentations:
             transforms.ColorJitter(brightness=0, contrast=0, saturation=0, hue=0.2)], 0.25),
         transforms.RandomApply([
             transforms.GaussianBlur(3)], 0.25),
-        transforms.RandomAdjustSharpness(random.uniform(0.5, 1.5), 0.25)
+        transforms.RandomAdjustSharpness(random.uniform(0, 2), 0.25)
     ])
 else:
     transformations = transforms.Compose([
         transforms.Resize((200, 200))
     ])
 
-num_epochs = 20
+num_epochs = 10
 learning_rate = 0.001
 train_CNN = False
 batch_size = 32
@@ -48,7 +48,7 @@ shuffle = True
 pin_memory = True
 num_workers = 4
 
-trainset = GuitarDataset(f"../chords_data/{data_type}/train", transform=transformations)
+trainset = GuitarDataset(f"../chords_data/{data_type}/train_eliminare", transform=transformations)
 
 train_loader = DataLoader(dataset=trainset, shuffle=shuffle, batch_size=batch_size, num_workers=num_workers,
                           pin_memory=pin_memory)
