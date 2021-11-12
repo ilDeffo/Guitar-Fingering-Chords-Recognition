@@ -48,7 +48,7 @@ shuffle = True
 pin_memory = True
 num_workers = 4
 
-trainset = GuitarDataset(f"../chords_data/{data_type}/train_eliminare", transform=transformations)
+trainset = GuitarDataset(f"../chords_data/{data_type}/train", transform=transformations)
 
 train_loader = DataLoader(dataset=trainset, shuffle=shuffle, batch_size=batch_size, num_workers=num_workers,
                           pin_memory=pin_memory)

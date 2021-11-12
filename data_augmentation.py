@@ -22,6 +22,7 @@ label_mappings = {
     'G': 6
 }
 
+
 def get_label_name(label):
     """
     Method to get name of class, given the numeric code.
@@ -34,16 +35,17 @@ def get_label_name(label):
         if v == label:
             return k
 
-#data_type = "cropped_images"
-#data_type = "cropped_processed_images"
-#data_type = "cropped_rotated_images"
-#data_type = "cropped_processed_rotated_images"
-#data_type = "cropped_rotated_processed_images_1"
-#data_type = "cropped_rotated_processed_images_2"
-#data_type = "cropped_rotated_processed_images_3"
-#data_type = "cropped_rotated_processed_images_4"
+
+# data_type = "cropped_images"
+# data_type = "cropped_processed_images"
+# data_type = "cropped_rotated_images"
+# data_type = "cropped_processed_rotated_images"
+# data_type = "cropped_rotated_processed_images_1"
+# data_type = "cropped_rotated_processed_images_2"
+# data_type = "cropped_rotated_processed_images_3"
+# data_type = "cropped_rotated_processed_images_4"
 data_type = "cropped_rotated_processed_images_5"
-#data_type = "cropped_rotated_processed_images_6"
+# data_type = "cropped_rotated_processed_images_6"
 
 extended_dataset_dir = f'chords_data/{data_type}_extended/train'
 
@@ -51,14 +53,15 @@ if __name__ == "__main__":
     if not os.path.exists(extended_dataset_dir):
         os.mkdir(extended_dataset_dir)
 
-    img_names = [img_name for img_name in os.listdir(f'chords_data/{data_type}_extended/train_not_augmented') if img_name.endswith('.jpeg')
+    img_names = [img_name for img_name in os.listdir(f'chords_data/{data_type}_extended/train_not_augmented') if
+                 img_name.endswith('.jpeg')
                  and not os.path.isdir(img_name)]
 
-    transfomations = [
-        transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2),
-        transforms.GaussianBlur(3),
-        transforms.RandomAdjustSharpness(random.uniform(0, 2), 1)
-    ]
+    # transfomations = [
+    #     transforms.ColorJitter(brightness=0.25, contrast=0.25, saturation=0.25, hue=0.25),
+    #     transforms.GaussianBlur(5),
+    #     transforms.RandomAdjustSharpness(3, 1)
+    # ]
 
     for idx, img_name in enumerate(img_names):
         img_path = f'chords_data/{data_type}_extended/train_not_augmented/{img_name}'
@@ -74,14 +77,18 @@ if __name__ == "__main__":
         label = label_mappings.get(img_base_name.split(' ')[0])
         label_name = get_label_name(label)
 
-        for idx_1, t in enumerate(transfomations):
+        for idx_1, t in enumerate([
+            transforms.ColorJitter(brightness=0.25, contrast=0.25, saturation=0.25, hue=0.25),
+            transforms.GaussianBlur(random.randrange(3, 16, 2)),
+            transforms.RandomAdjustSharpness(random.uniform(1.5, 3), 1)]
+        ):
             new_im = image.clone()
             new_im = t(new_im)
             new_im = np.moveaxis(new_im.numpy(), 0, 2)
             new_im = cv.cvtColor(new_im, cv.COLOR_RGB2BGR)
             new_im *= 255
             new_im = new_im.round().clip(0, 255).astype(np.uint8)
-            im_name = f'{label_name} ({index_name}_{idx_1+1}).jpeg'
+            im_name = f'{label_name} ({index_name}_{idx_1 + 1}).jpeg'
             out_path = f'{extended_dataset_dir}/{im_name}'
             cv.imwrite(out_path, new_im)
 
@@ -92,9 +99,3 @@ if __name__ == "__main__":
         im_name = f'{label_name} ({index_name}_0).jpeg'
         out_path = f'{extended_dataset_dir}/{im_name}'
         cv.imwrite(out_path, image)
-
-
-
-
-
-
