@@ -15,9 +15,9 @@ augmentations = False
 #data_type = "cropped_images"
 #data_type = "cropped_rotated_images"
 #data_type = "cropped_rotated_processed_images_5"
-data_type = "cropped_images_extended"
+#data_type = "cropped_images_extended"
 #data_type = "cropped_rotated_images_extended"
-#data_type = "cropped_rotated_processed_images_5_extended"
+data_type = "cropped_rotated_processed_images_5_extended"
 
 
 if augmentations:
