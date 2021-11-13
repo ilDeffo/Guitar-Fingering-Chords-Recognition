@@ -184,27 +184,27 @@ if __name__ == '__main__':
     out_8 = blending(img, negative(out_6), a=0.75)
     out_8 = saturation(decrease_brightness(out_8))
     ax[4][0].imshow(cv.cvtColor(out_8.numpy(), cv.COLOR_BGR2RGB))
-    ax[4][0].set_title('8. Saturated Dark Blending: Original + 7 (a=0.75)')
+    ax[4][0].set_title('8. Saturated Dark Blending: Original + 7 (\u03B1=0.75)')
 
     # 9 - SATURATED LIGHT IMAGE BLENDING with out 5
     out_9 = blending(img, out_5, a=0.5)
     out_9 = saturation(increase_brightness(out_9))
     ax[4][1].imshow(cv.cvtColor(out_9.numpy(), cv.COLOR_BGR2RGB))
-    ax[4][1].set_title('9. Saturated Bright Blending: Original + 5 (a=0.5)')
+    ax[4][1].set_title('9. Saturated Bright Blending: Original + 5 (\u03B1=0.5)')
 
     # 10 - SATURATED LIGHT IMAGE BLENDING with Frei & Chen edges
     fc_edges = frei_and_chen_edges(img)
     out_10 = blending(img, fc_edges, a=0.5)
     out_10 = saturation(increase_brightness(out_10))
     ax[5][0].imshow(cv.cvtColor(out_10.numpy(), cv.COLOR_BGR2RGB))
-    ax[5][0].set_title('10. Saturated Bright Blending: Original + Frei & Chen edges (a=0.5)')
+    ax[5][0].set_title('10. Saturated Bright Blending: Original + Frei & Chen edges (\u03B1=0.5)')
 
     # 11 - SATURATED LIGHT IMAGE BLENDING with Canny edges
     c_edges = torch.from_numpy(cv.Canny(img.numpy(), threshold1=100, threshold2=200))
     out_11 = blending(img, c_edges, a=0.5)
     out_11 = saturation(increase_brightness(out_11))
     ax[5][1].imshow(cv.cvtColor(out_11.numpy(), cv.COLOR_BGR2RGB))
-    ax[5][1].set_title('11. Saturated Bright Blending: Original + Canny edges (a=0.5)')
+    ax[5][1].set_title('11. Saturated Bright Blending: Original + Canny edges (\u03B1=0.5)')
 
     # Saving image processing synthetic table
     plt.savefig(TMP_DIR + 'image_processing_table.jpg')
