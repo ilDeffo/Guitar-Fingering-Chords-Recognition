@@ -119,6 +119,9 @@ def get_hand_image_cropped(img, threshold=0.799, padding=100, verbose=False, sav
     out = cv.cvtColor(out.numpy(), cv.COLOR_RGB2BGR)
     out = torch.from_numpy(out)
     """
+    # Saving image
+    if save_img:
+        cv.imwrite(TMP_DIR+'cropped.jpg', out.numpy())
     return out
 
 
