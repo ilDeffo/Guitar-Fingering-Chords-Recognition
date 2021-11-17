@@ -128,10 +128,11 @@ if __name__ == '__main__':
 
     f, ax = plt.subplots(6, 2, figsize=(12, 20))
     f.tight_layout()
+    f.subplots_adjust(hspace=0.25)
 
     # 0 - ORIGINAL IMAGE
     ax[0][0].imshow(cv.cvtColor(img, cv.COLOR_BGR2RGB))
-    ax[0][0].set_title('0. Original image')
+    ax[0][0].set_title('0. Original')
 
     # Convert to Torch tensor (c, h, w)
     # img = np.swapaxes(np.swapaxes(img, 0, 2), 1, 2)
@@ -146,7 +147,7 @@ if __name__ == '__main__':
     # 1 - CONTRAST STRETCHING
     out_1 = contrast_stretching(img, bgr_mins, bgr_maxs, bgr_mins_1, bgr_maxs_1)
     ax[0][1].imshow(cv.cvtColor(out_1.numpy(), cv.COLOR_BGR2RGB))
-    ax[0][1].set_title('1. Contrast stretching')
+    ax[0][1].set_title('1. Contrast Stretching')
 
     # 2 - SHARPENING
     out_2 = sharpening(img)
@@ -156,7 +157,7 @@ if __name__ == '__main__':
     # 3 - SHARPENING + CONTRAST STRETCHING
     out_3 = contrast_stretching(out_2, bgr_mins, bgr_maxs, bgr_mins_1, bgr_maxs_1)
     ax[1][1].imshow(cv.cvtColor(out_3.numpy(), cv.COLOR_BGR2RGB))
-    ax[1][1].set_title('3. Sharpening + Contrast stretching')
+    ax[1][1].set_title('3. Sharpening + Contrast Stretching')
 
     # 4 - FREI & CHEN EDGE DETECTION
     out_4 = frei_and_chen_edges(img)
@@ -166,7 +167,7 @@ if __name__ == '__main__':
     # 5 - SHARPENING + CONTRAST STRETCHING + FREI & CHEN EDGES
     out_5 = frei_and_chen_edges(out_3)
     ax[2][1].imshow(cv.cvtColor(out_5.numpy(), cv.COLOR_BGR2RGB))
-    ax[2][1].set_title('5. Sharpening + Contrast stretching + Frei & Chen edges')
+    ax[2][1].set_title('5. Sharpening + Contrast Stretching + Frei & Chen edges')
 
     # 6 - CANNY EDGE DETECTION
     out_6 = cv.Canny(img.numpy(), threshold1=100, threshold2=200)
@@ -183,27 +184,27 @@ if __name__ == '__main__':
     out_8 = blending(img, negative(out_6), a=0.75)
     out_8 = saturation(decrease_brightness(out_8))
     ax[4][0].imshow(cv.cvtColor(out_8.numpy(), cv.COLOR_BGR2RGB))
-    ax[4][0].set_title('8. Saturated dark blending: Original + 7 (a=0.75)')
+    ax[4][0].set_title('8. Saturated Dark Blending: Original + 7 (\u03B1=0.75)')
 
     # 9 - SATURATED LIGHT IMAGE BLENDING with out 5
     out_9 = blending(img, out_5, a=0.5)
     out_9 = saturation(increase_brightness(out_9))
     ax[4][1].imshow(cv.cvtColor(out_9.numpy(), cv.COLOR_BGR2RGB))
-    ax[4][1].set_title('9. Saturated light blending: Original + 5 (a=0.5)')
+    ax[4][1].set_title('9. Saturated Bright Blending: Original + 5 (\u03B1=0.5)')
 
     # 10 - SATURATED LIGHT IMAGE BLENDING with Frei & Chen edges
     fc_edges = frei_and_chen_edges(img)
     out_10 = blending(img, fc_edges, a=0.5)
     out_10 = saturation(increase_brightness(out_10))
     ax[5][0].imshow(cv.cvtColor(out_10.numpy(), cv.COLOR_BGR2RGB))
-    ax[5][0].set_title('10. Saturated light blending: Original + Frei & Chen edges (a=0.5)')
+    ax[5][0].set_title('10. Saturated Bright Blending: Original + Frei & Chen edges (\u03B1=0.5)')
 
     # 11 - SATURATED LIGHT IMAGE BLENDING with Canny edges
     c_edges = torch.from_numpy(cv.Canny(img.numpy(), threshold1=100, threshold2=200))
     out_11 = blending(img, c_edges, a=0.5)
     out_11 = saturation(increase_brightness(out_11))
     ax[5][1].imshow(cv.cvtColor(out_11.numpy(), cv.COLOR_BGR2RGB))
-    ax[5][1].set_title('11. Saturated light blending: Original + Canny edges (a=0.5)')
+    ax[5][1].set_title('11. Saturated Bright Blending: Original + Canny edges (\u03B1=0.5)')
 
     # Saving image processing synthetic table
     plt.savefig(TMP_DIR + 'image_processing_table.jpg')
