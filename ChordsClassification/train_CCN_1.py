@@ -40,6 +40,10 @@ else:
         transforms.Resize((200, 200))
     ])
 
+transformations_testing = transforms.Compose([
+        transforms.Resize((200, 200))
+    ])
+
 num_epochs = 10
 learning_rate = 0.001
 train_CNN = False
@@ -53,7 +57,7 @@ trainset = GuitarDataset(f"../chords_data/{data_type}/train", transform=transfor
 train_loader = DataLoader(dataset=trainset, shuffle=shuffle, batch_size=batch_size, num_workers=num_workers,
                           pin_memory=pin_memory)
 
-testset = GuitarDataset(f"../chords_data/{data_type}/test", transform=transformations)
+testset = GuitarDataset(f"../chords_data/{data_type}/test", transform=transformations_testing)
 test_loader = DataLoader(dataset=testset, shuffle=shuffle, batch_size=batch_size, num_workers=num_workers,
                          pin_memory=pin_memory)
 
