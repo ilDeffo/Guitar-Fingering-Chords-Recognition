@@ -36,15 +36,15 @@ def get_label_name(label):
             return k
 
 
-# data_type = "cropped_images"
+#data_type = "cropped_images"
 # data_type = "cropped_processed_images"
-# data_type = "cropped_rotated_images"
+data_type = "cropped_rotated_images"
 # data_type = "cropped_processed_rotated_images"
 # data_type = "cropped_rotated_processed_images_1"
 # data_type = "cropped_rotated_processed_images_2"
 # data_type = "cropped_rotated_processed_images_3"
 # data_type = "cropped_rotated_processed_images_4"
-data_type = "cropped_rotated_processed_images_5"
+#data_type = "cropped_rotated_processed_images_5"
 # data_type = "cropped_rotated_processed_images_6"
 
 extended_dataset_dir = f'chords_data/{data_type}_extended/train'
