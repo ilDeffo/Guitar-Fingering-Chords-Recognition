@@ -10,30 +10,24 @@ from guitar_dataset import GuitarDataset
 from tqdm import tqdm
 import copy
 
-augmentations = False
+augmentations = True
 
 #data_type = "cropped_images"
 #data_type = "cropped_rotated_images"
-#data_type = "cropped_rotated_processed_images_5"
+data_type = "cropped_rotated_processed_images_5"
 #data_type = "cropped_images_extended"
 #data_type = "cropped_rotated_images_extended"
-data_type = "cropped_rotated_processed_images_5_extended"
+#data_type = "cropped_rotated_processed_images_5_extended"
 
 
 if augmentations:
     transformations = transforms.Compose([
         transforms.Resize((200, 200)),
         transforms.RandomApply([
-            transforms.ColorJitter(brightness=0.2, contrast=0, saturation=0, hue=0)], 0.25),
+            transforms.ColorJitter(brightness=0.25, contrast=0.25, saturation=0.25, hue=0.25)], 0.25),
         transforms.RandomApply([
-            transforms.ColorJitter(brightness=0, contrast=0.2, saturation=0, hue=0)], 0.25),
-        transforms.RandomApply([
-            transforms.ColorJitter(brightness=0, contrast=0, saturation=0.2, hue=0)], 0.25),
-        transforms.RandomApply([
-            transforms.ColorJitter(brightness=0, contrast=0, saturation=0, hue=0.2)], 0.25),
-        transforms.RandomApply([
-            transforms.GaussianBlur(3)], 0.25),
-        transforms.RandomAdjustSharpness(random.uniform(0, 2), 0.25)
+            transforms.GaussianBlur(random.randrange(3, 16, 2))], 0.25),
+        transforms.RandomAdjustSharpness(random.uniform(1.5, 3), 0.25)
     ])
 else:
     transformations = transforms.Compose([
@@ -44,7 +38,7 @@ transformations_testing = transforms.Compose([
         transforms.Resize((200, 200))
     ])
 
-num_epochs = 10
+num_epochs = 20
 learning_rate = 0.001
 train_CNN = False
 batch_size = 32
