@@ -10,11 +10,18 @@ from guitar_dataset import GuitarDataset
 from tqdm import tqdm
 import copy
 
-augmentations = True
+augmentations = False
 
 #data_type = "cropped_images"
-#data_type = "cropped_rotated_images"
-data_type = "cropped_rotated_processed_images_5"
+#data_type = "cropped_processed_images"
+data_type = "cropped_rotated_images"
+#data_type = "cropped_rotated_processed_images_0"
+#data_type = "cropped_rotated_processed_images_1"
+#data_type = "cropped_rotated_processed_images_2"
+#data_type = "cropped_rotated_processed_images_3"
+#data_type = "cropped_rotated_processed_images_4"
+#data_type = "cropped_rotated_processed_images_5"
+#data_type = "cropped_rotated_processed_images_6"
 #data_type = "cropped_images_extended"
 #data_type = "cropped_rotated_images_extended"
 #data_type = "cropped_rotated_processed_images_5_extended"
