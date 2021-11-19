@@ -38,13 +38,13 @@ def get_label_name(label):
 
 #data_type = "cropped_images"
 # data_type = "cropped_processed_images"
-data_type = "cropped_rotated_images"
+#data_type = "cropped_rotated_images"
 # data_type = "cropped_processed_rotated_images"
 # data_type = "cropped_rotated_processed_images_1"
 # data_type = "cropped_rotated_processed_images_2"
 # data_type = "cropped_rotated_processed_images_3"
 # data_type = "cropped_rotated_processed_images_4"
-#data_type = "cropped_rotated_processed_images_5"
+data_type = "cropped_rotated_processed_images_5"
 # data_type = "cropped_rotated_processed_images_6"
 
 extended_dataset_dir = f'chords_data/{data_type}_extended/train'
@@ -79,6 +79,7 @@ if __name__ == "__main__":
 
         for idx_1, t in enumerate([
             transforms.ColorJitter(brightness=0.25, contrast=0.25, saturation=0.25, hue=0.25),
+            #transforms.RandomAutocontrast(),
             transforms.GaussianBlur(random.randrange(3, 16, 2)),
             transforms.RandomAdjustSharpness(random.uniform(1.5, 3), 1)]
         ):
