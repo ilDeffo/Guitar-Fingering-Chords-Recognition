@@ -83,7 +83,7 @@ if __name__ == "__main__":
 
     model = ChordClassificationNetwork().to(device)
 
-    criterion = nn.BCELoss()
+    criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     import csv
