@@ -1,4 +1,0 @@
-cropped_images:  0.9375
-cropped_rotated_images: 0.9706632653061225
-cropped_processed_rotated_images: 1.0
-cropped_rotated_processed_images_1: 1.0

@@ -1,25 +1,51 @@
 import os
+import random
 
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
-from ChordsClassification.ChordClassificationNetwork import ChordClassificationNetwork
+from ChordsClassification.ChordClassificationNetwork_1 import ChordClassificationNetwork
 from guitar_dataset import GuitarDataset
 from tqdm import tqdm
+import copy
 
-# data_type = "cropped_images"
-data_type = "cropped_processed_images"
-# data_type = "cropped_rotated_images"
-# data_type = "cropped_processed_rotated_images"
-# data_type = "cropped_processed_rotated_images_1"
-# data_type = "cropped_processed_rotated_images_2"
+augmentations = False
 
-transformations = transforms.Compose([
-    transforms.Resize((200, 200))
-])
+#data_type = "cropped_images"
+#data_type = "cropped_processed_images"
+data_type = "cropped_rotated_images"
+#data_type = "cropped_rotated_processed_images_0"
+#data_type = "cropped_rotated_processed_images_1"
+#data_type = "cropped_rotated_processed_images_2"
+#data_type = "cropped_rotated_processed_images_3"
+#data_type = "cropped_rotated_processed_images_4"
+#data_type = "cropped_rotated_processed_images_5"
+#data_type = "cropped_rotated_processed_images_6"
+#data_type = "cropped_images_extended"
+#data_type = "cropped_rotated_images_extended"
+#data_type = "cropped_rotated_processed_images_5_extended"
 
-num_epochs = 10
+
+if augmentations:
+    transformations = transforms.Compose([
+        transforms.Resize((200, 200)),
+        transforms.RandomApply([
+            transforms.ColorJitter(brightness=0.25, contrast=0.25, saturation=0.25, hue=0.25)], 0.25),
+        transforms.RandomApply([
+            transforms.GaussianBlur(random.randrange(3, 16, 2))], 0.25),
+        transforms.RandomAdjustSharpness(random.uniform(1.5, 3), 0.25)
+    ])
+else:
+    transformations = transforms.Compose([
+        transforms.Resize((200, 200))
+    ])
+
+transformations_testing = transforms.Compose([
+        transforms.Resize((200, 200))
+    ])
+
+num_epochs = 20
 learning_rate = 0.001
 train_CNN = False
 batch_size = 32
@@ -27,91 +53,23 @@ shuffle = True
 pin_memory = True
 num_workers = 4
 
-dataset = GuitarDataset(f"../chords_data/{data_type}/train", transform=transformations)
-train_set, validation_set = torch.utils.data.random_split(dataset, [int(0.8 * len(dataset)),
-                                                                    len(dataset) - int(0.8 * len(dataset))])
-train_loader = DataLoader(dataset=train_set, shuffle=shuffle, batch_size=batch_size, num_workers=num_workers,
-                          pin_memory=pin_memory)
-validation_loader = DataLoader(dataset=validation_set, shuffle=shuffle, batch_size=batch_size, num_workers=num_workers,
-                               pin_memory=pin_memory)
+trainset = GuitarDataset(f"../chords_data/{data_type}/train", transform=transformations)
 
-testset = GuitarDataset(f"../chords_data/{data_type}/test", transform=transformations)
-test_loader = DataLoader(dataset=testset, shuffle=False, batch_size=batch_size, num_workers=num_workers,
+train_loader = DataLoader(dataset=trainset, shuffle=shuffle, batch_size=batch_size, num_workers=num_workers,
+                          pin_memory=pin_memory)
+
+testset = GuitarDataset(f"../chords_data/{data_type}/test", transform=transformations_testing)
+test_loader = DataLoader(dataset=testset, shuffle=shuffle, batch_size=batch_size, num_workers=num_workers,
                          pin_memory=pin_memory)
+
+if augmentations:
+    data_type = "augmented_" + data_type
 
 PATH = f"./saved_models/{data_type}.pth"
 
-
-def check_accuracy(loader, model):
-    if loader == train_loader:
-        print("Checking accuracy on training data")
-    else:
-        print("Checking accuracy on validation data")
-
-    num_correct = 0
-    num_samples = 0
-    model.eval()
-
-    with torch.no_grad():
-        for x, y in loader:
-            x = x.to(device=device)
-            y = y.to(device=device)
-
-            scores = model(x)
-            # predictions = torch.tensor([1.0 if i >= 0.5 else 0.0 for i in scores]).to(device)
-            predictions = scores.argmax(1)
-            num_correct += (predictions == y).sum()
-            num_samples += predictions.size(0)
-            print(
-                f"Got {num_correct} / {num_samples} with accuracy {float(num_correct) / float(num_samples) * 100:.2f}"
-            )
-    return f"{float(num_correct) / float(num_samples) * 100:.2f}"
-
-
-def train():
-    model.train()
-    for epoch in range(num_epochs + 1):
-        loop = tqdm(train_loader, total=len(train_loader), leave=True)
-        # if epoch % 2 == 0:
-        loop.set_postfix(val_acc=check_accuracy(validation_loader, model))
-        if epoch == num_epochs:
-            break
-        for imgs, labels in loop:
-            labels = torch.nn.functional.one_hot(labels, num_classes=7).float()
-            imgs = imgs.to(device)
-            labels = labels.to(device)
-            outputs = model(imgs)
-            loss = criterion(outputs, labels)
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            loop.set_description(f"Epoch [{epoch + 1}/{num_epochs}]")
-            loop.set_postfix(loss=loss.item())
-
-    torch.save(model.state_dict(), PATH)
-
-
-def test():
-    model.load_state_dict(torch.load(PATH))
-
-    correct = 0
-    total = 0
-    # since we're not training, we don't need to calculate the gradients for our outputs
-    with torch.no_grad():
-        for data in test_loader:
-            images, labels = data
-            images = images.to(device)
-            labels = labels.to(device)
-            # calculate outputs by running images through the network
-            outputs = model(images)
-            # the class with the highest energy is what we choose as prediction
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-
-    print('Accuracy of the network on the test images: %d %%' % (
-            100 * correct / total))
-
+results_dir = 'results/'
+if not os.path.exists(results_dir):
+    os.mkdir(results_dir)
 
 if __name__ == "__main__":
     print(f"Working on {data_type}")
@@ -128,5 +86,128 @@ if __name__ == "__main__":
     criterion = nn.BCELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-    train()
-    test()
+    import csv
+
+    csv_header = ['Classification loss']
+
+    csvfile = open(results_dir + data_type + '_our_nn_loss.csv', 'w', newline='')
+    writer = csv.writer(csvfile)
+    writer.writerow(csv_header)
+
+    print('------------- Training -----------------')
+    best_acc = 0
+    best_model_wts = copy.deepcopy(model.state_dict())
+
+    for epoch in range(num_epochs):
+        print('-' * 10)
+        print('Epoch {}/{}'.format(epoch + 1, num_epochs))
+
+        for phase in ['train', 'val']:
+            if phase == 'train':
+                model.train()  # Set model to training mode
+                for i, (imgs, labels) in enumerate(tqdm(train_loader)):
+                    labels = torch.nn.functional.one_hot(labels, num_classes=7).float()
+                    imgs = imgs.to(device)
+                    labels = labels.to(device)
+                    outputs = model(imgs)
+                    loss = criterion(outputs, labels)
+                    # writing loss in csv file
+                    row = [loss.item()]
+                    writer.writerow(row)
+
+                    optimizer.zero_grad()
+                    loss.backward()
+                    optimizer.step()
+            if phase == 'val':
+                model.eval()  # Set model to evaluate mode
+                num_correct = 0
+                num_samples = 0
+
+                with torch.no_grad():
+                    for x, y in test_loader:
+                        x = x.to(device=device)
+                        y = y.to(device=device)
+
+                        scores = model(x)
+                        # predictions = torch.tensor([1.0 if i >= 0.5 else 0.0 for i in scores]).to(device)
+                        predictions = scores.argmax(1)
+                        num_correct += (predictions == y).sum()
+                        num_samples += predictions.size(0)
+                        acc = float(num_correct) / float(num_samples) * 100
+                        print(
+                            f"Got {num_correct} / {num_samples} with accuracy {acc:.2f}"
+                        )
+                    if acc > best_acc:
+                        best_acc = acc
+                        best_model_wts = copy.deepcopy(model.state_dict())
+
+    csvfile.close()
+    torch.save(best_model_wts, PATH)
+
+    print('--------- Evaluating performance and saving results ------------')
+    model = ChordClassificationNetwork()
+    model.load_state_dict(torch.load(PATH, map_location=torch.device('cpu')))
+
+    testloader = DataLoader(dataset=testset, shuffle=False, batch_size=batch_size, num_workers=num_workers)
+    preds = []
+    y_true = []
+    for x, y in test_loader:
+        scores = model(x)
+        predictions = scores.argmax(1)
+        preds.append(predictions)
+        y_true.append(y)
+
+    preds = torch.cat(preds)
+    y_true = torch.cat(y_true)
+
+    import pandas as pd
+
+    df = pd.DataFrame({'predictions': preds.cpu().numpy(), 'y_true': y_true.cpu().numpy()})
+    df.to_csv(results_dir + data_type + '_our_nn_predictions__ytrue.csv', index=False)
+    preds = df['predictions'].values
+    y_true = df['y_true'].values
+    reverse_label_mappings = {
+        0: 'A',
+        1: 'B',
+        2: 'C',
+        3: 'D',
+        4: 'E',
+        5: 'F',
+        6: 'G'
+    }
+    results_dict = {}
+    for i in range(7):
+        results_dict[reverse_label_mappings[i]] = []
+        results_dict[reverse_label_mappings[i]].append(((preds == y_true) & (y_true == i)).sum())
+        results_dict[reverse_label_mappings[i]].append((y_true == i).sum())
+    df = pd.DataFrame(results_dict, index=['num_correct', 'num_samples'])
+    df = df.T
+    df.to_csv(results_dir + data_type + '_our_nn_performances.csv')
+
+    from sklearn.metrics import confusion_matrix
+    from sklearn.metrics import accuracy_score
+    from sklearn.metrics import recall_score
+    from sklearn.metrics import precision_score
+    from sklearn.metrics import f1_score
+
+    print(confusion_matrix(y_true, preds))
+    accuracy = accuracy_score(y_true, preds)
+    print('Accuracy:', accuracy)
+    with open(results_dir + data_type + '_our_nn_accuracy.txt', 'wt') as f:
+        f.write(str(accuracy))
+
+    precision = precision_score(y_true, preds, average=None)
+    print('Precision:', precision)
+
+    recall = recall_score(y_true, preds, average=None)
+    print('Recall:', recall)
+
+    f1_score = f1_score(y_true, preds, average=None)
+    print('F1 score:', f1_score)
+
+    df = pd.DataFrame({
+        'precision': precision,
+        'recall': recall,
+        'f1_score': f1_score
+    }, index=['A', 'B', 'C', 'D', 'E', 'F', 'G'])
+    df.to_csv(results_dir + data_type + '_our_nn_precision_recall_f1_score.csv')
